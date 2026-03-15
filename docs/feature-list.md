@@ -1,64 +1,66 @@
-# Tutta — Feature List (MVP)
+# Tutta – Feature List
 
-This list focuses on the smallest set of features needed to launch and validate demand.
+## MVP Features
 
-## Guest Features
-### Account & Profile
-- Sign up / sign in (phone or email; choose one for MVP)
-- Basic profile: name, photo (optional), contact info
+These features are required for the first working version of Tutta.
 
-### Search & Discovery
-- Browse listings feed
-- Search by location (city/area)
-- Filters (MVP):
-  - price range
-  - room/home type (room / entire place)
-  - number of guests
-- Listing card + listing details page
+### Authentication
+- User registration
+- User login
+- User profile
+
+### Listings
+- View list of homes
+- View listing details
+- Add a new listing
+- Upload listing images
+- Set price (daily / weekly / monthly)
+
+### Search and Filters
+- Search listings
+- Filter by price
+- Filter by location
+- Filter by room type
+
+### Map
+- View listings on map
+- Show price pins on map
 
 ### Booking
-- Select dates (1 day to 30 days)
-- See price breakdown (nightly * nights + fees if any)
-- Send booking request to host
-- View booking status: pending / accepted / rejected / canceled
-- Basic in-app notifications (or push later; fallback to in-app + email)
+- Select dates
+- Check availability
+- Create booking
+- Cancel booking
 
-### Messaging (MVP-light)
-- Chat with host after sending request (or after acceptance—pick one rule and keep it consistent)
+### Chat
+- Guest and host messaging
+- Basic chat system
 
-## Host Features
-### Host Onboarding
-- Become a host toggle/role
+### Reviews
+- Guest review host
+- Host review guest
 
-### Listing Management
-- Create listing:
-  - title, description
-  - address / approximate location
-  - photos (at least 1)
-  - price per night
-  - max guests
-  - type: room / entire place
-  - house rules (text)
-  - availability (simple: available/unavailable dates)
-- Edit listing
-- Activate/deactivate listing
+### Payments
+- Click payment
+- Payme payment
 
-### Booking Management
-- View incoming booking requests
-- Accept / reject
-- Message guest
+---
 
-## Admin / Operations (Internal)
-- Basic admin access (can be manual first):
-  - view users
-  - view listings
-  - remove/disable a listing (safety)
-- Basic logging and error tracking
+## Future Features
 
-## Not in MVP (Planned)
-- Payments inside app
-- Reviews & ratings
-- Identity verification (KYC)
-- Smart pricing, coupons, promotions
-- Map search + advanced geo
-- Disputes / refunds automation
+These features will be added after the MVP launch.
+
+### Premium Features
+- Skill exchange stay
+- Premium host accounts
+- Listing promotion
+
+### Security
+- OneID verification
+- Identity verification
+
+### Platform
+- Admin dashboard
+- Notifications
+- Saved listings
+- Analytics
