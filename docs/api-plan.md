@@ -60,3 +60,18 @@
 - POST /skill-exchange
 - GET /skill-exchange
 - GET /skill-exchange/:id
+
+
+---
+
+## Standard API Response Format
+
+To make Flutter and Backend integration easy, all API responses should follow a consistent structure.
+
+### Success Response
+```json
+{
+  "success": true,
+  "message": "Request successful",
+  "data": {}
+}
