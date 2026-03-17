@@ -48,6 +48,8 @@ Agar `password authentication failed` chiqsa, `.env`dagi `POSTGRES_USER/POSTGRES
 - `POST /api/listings/{id}/unpublish` (owner host only)
 - `POST /api/bookings`
 - `GET /api/bookings`
+- `POST /api/bookings/{id}/confirm` (listing host only)
+- `POST /api/bookings/{id}/cancel` (guest or host)
 - `POST /api/reviews`
 - `GET /api/reviews`
 

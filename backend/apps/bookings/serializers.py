@@ -9,11 +9,31 @@ from .models import Booking
 
 class BookingSerializer(serializers.ModelSerializer):
     guest_id = serializers.IntegerField(source='guest.id', read_only=True)
+    host_id = serializers.IntegerField(source='listing.host.id', read_only=True)
+    listing_title = serializers.CharField(source='listing.title', read_only=True)
 
     class Meta:
         model = Booking
-        fields = ('id', 'listing', 'guest_id', 'start_date', 'end_date', 'total_price', 'status', 'created_at')
-        read_only_fields = ('id', 'guest_id', 'status', 'total_price', 'created_at')
+        fields = (
+            'id',
+            'listing',
+            'listing_title',
+            'guest_id',
+            'host_id',
+            'start_date',
+            'end_date',
+            'total_price',
+            'status',
+            'created_at',
+        )
+        read_only_fields = ('id', 'guest_id', 'host_id', 'listing_title', 'status', 'total_price', 'created_at')
+
+
+class BookingCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ('id', 'listing', 'start_date', 'end_date', 'total_price', 'status', 'created_at')
+        read_only_fields = ('id', 'total_price', 'status', 'created_at')
 
     def validate(self, attrs):
         start_date = attrs['start_date']
@@ -25,6 +45,9 @@ class BookingSerializer(serializers.ModelSerializer):
 
         if start_date < date.today():
             raise serializers.ValidationError('start_date cannot be in the past.')
+
+        if listing.host_id == self.context['request'].user.id:
+            raise serializers.ValidationError('You cannot book your own listing.')
 
         overlapping = Booking.objects.filter(
             listing=listing,
@@ -53,3 +76,9 @@ class BookingSerializer(serializers.ModelSerializer):
         if not value.is_active:
             raise serializers.ValidationError('Listing is not active.')
         return value
+
+
+class BookingStatusActionSerializer(serializers.Serializer):
+    booking_id = serializers.IntegerField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    detail = serializers.CharField(read_only=True)
