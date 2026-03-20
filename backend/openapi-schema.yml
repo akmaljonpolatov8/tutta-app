@@ -38,11 +38,27 @@ paths:
       operationId: api_auth_logout_create
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+          description: ''
   /api/auth/refresh:
     post:
       operationId: api_auth_refresh_create
@@ -168,7 +184,11 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingCancelResponse'
+          description: ''
   /api/bookings/{id}/confirm:
     post:
       operationId: api_bookings_confirm_create
@@ -184,7 +204,11 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingConfirmResponse'
+          description: ''
   /api/chat/threads:
     get:
       operationId: api_chat_threads_list
@@ -313,7 +337,11 @@ paths:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+          description: ''
   /api/listings/:
     get:
       operationId: api_listings_list
@@ -515,7 +543,11 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingPublishResponse'
+          description: ''
   /api/listings/{id}/unpublish:
     post:
       operationId: api_listings_unpublish_create
@@ -531,7 +563,11 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingUnpublishResponse'
+          description: ''
   /api/payments/intents:
     get:
       operationId: api_payments_intents_list
@@ -617,11 +653,33 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhook'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhook'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhook'
+        required: true
       security:
       - {}
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentWebhookForbidden'
+          description: ''
   /api/reviews/:
     get:
       operationId: api_reviews_list
@@ -740,6 +798,32 @@ components:
       - start_date
       - status
       - total_price
+    BookingCancelResponse:
+      type: object
+      properties:
+        booking_id:
+          type: integer
+        status:
+          type: string
+        detail:
+          type: string
+      required:
+      - booking_id
+      - detail
+      - status
+    BookingConfirmResponse:
+      type: object
+      properties:
+        booking_id:
+          type: integer
+        status:
+          type: string
+        detail:
+          type: string
+      required:
+      - booking_id
+      - detail
+      - status
     BookingCreate:
       type: object
       properties:
@@ -775,6 +859,20 @@ components:
       - start_date
       - status
       - total_price
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        database:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+      - database
+      - status
+      - timestamp
     Listing:
       type: object
       properties:
@@ -900,6 +998,13 @@ components:
       - created_at
       - id
       - image
+    ListingPublishResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
     ListingTypeEnum:
       enum:
       - home
@@ -908,6 +1013,27 @@ components:
       description: |-
         * `home` - Home
         * `room` - Room
+    ListingUnpublishResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    Logout:
+      type: object
+      properties:
+        refresh:
+          type: string
+      required:
+      - refresh
+    LogoutResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
     Message:
       type: object
       properties:
@@ -1088,6 +1214,35 @@ components:
       - id
       - provider_payment_id
       - status
+    PaymentWebhook:
+      type: object
+      properties:
+        provider_payment_id:
+          type: string
+          maxLength: 64
+        status:
+          $ref: '#/components/schemas/PaymentWebhookStatusEnum'
+        payload: {}
+      required:
+      - provider_payment_id
+      - status
+    PaymentWebhookForbidden:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    PaymentWebhookStatusEnum:
+      enum:
+      - succeeded
+      - failed
+      - cancelled
+      type: string
+      description: |-
+        * `succeeded` - succeeded
+        * `failed` - failed
+        * `cancelled` - cancelled
     ProviderEnum:
       enum:
       - click
@@ -1218,10 +1373,11 @@ components:
           readOnly: true
           nullable: true
         last_message:
-          type: string
+          type: object
+          additionalProperties: {}
           readOnly: true
         unread_count:
-          type: string
+          type: integer
           readOnly: true
         created_at:
           type: string

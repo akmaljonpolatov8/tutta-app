@@ -1,7 +1,9 @@
 import os
 
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, permissions, response, status, views
+from rest_framework import serializers
 
 from .models import Payment
 from .serializers import PaymentIntentCreateSerializer, PaymentSerializer, PaymentWebhookSerializer
@@ -41,6 +43,13 @@ class PaymentWebhookView(views.APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
+    @extend_schema(
+        request=PaymentWebhookSerializer,
+        responses={
+            200: PaymentSerializer,
+            403: inline_serializer(name='PaymentWebhookForbidden', fields={'detail': serializers.CharField()}),
+        },
+    )
     def post(self, request, provider):
         secret = os.getenv(f'PAYMENT_WEBHOOK_SECRET_{provider.upper()}', '').strip()
         provided = request.headers.get('X-Webhook-Secret', '').strip()

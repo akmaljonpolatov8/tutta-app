@@ -1,4 +1,6 @@
 from rest_framework import generics, permissions, response, status, throttling, views
+from rest_framework import serializers
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .serializers import LogoutSerializer, RegisterSerializer, TuttaTokenObtainPairSerializer, UserSerializer
@@ -29,6 +31,15 @@ class LogoutView(views.APIView):
     throttle_classes = [throttling.ScopedRateThrottle]
     throttle_scope = 'auth_logout'
 
+    @extend_schema(
+        request=LogoutSerializer,
+        responses={
+            200: inline_serializer(
+                name='LogoutResponse',
+                fields={'detail': serializers.CharField()},
+            ),
+        },
+    )
     def post(self, request):
         serializer = LogoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -1,12 +1,26 @@
 from django.db import connection
+from drf_spectacular.utils import extend_schema, inline_serializer
 from django.utils import timezone
 from rest_framework import permissions, response, status, views
+from rest_framework import serializers
 
 
 class HealthCheckView(views.APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name='HealthCheckResponse',
+                fields={
+                    'status': serializers.CharField(),
+                    'database': serializers.CharField(),
+                    'timestamp': serializers.DateTimeField(),
+                },
+            )
+        }
+    )
     def get(self, request):
         db_ok = True
         try:

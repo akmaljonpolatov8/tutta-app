@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 
 from .models import Message, Thread
 
@@ -32,12 +34,14 @@ class ThreadSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'guest_id', 'host_id', 'last_message_at', 'last_message', 'unread_count', 'created_at')
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_last_message(self, obj):
         message = obj.messages.order_by('-created_at').first()
         if not message:
             return None
         return {'id': message.id, 'content': message.content, 'sender_id': message.sender_id, 'created_at': message.created_at}
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_unread_count(self, obj):
         user = self.context['request'].user
         return obj.messages.filter(is_read=False).exclude(sender=user).count()

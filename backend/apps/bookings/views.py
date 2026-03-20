@@ -1,6 +1,8 @@
 from datetime import date
 
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework import generics, permissions, response, status, views
 
@@ -41,6 +43,19 @@ class BookingListCreateView(generics.ListCreateAPIView):
 class BookingConfirmView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=None,
+        responses={
+            200: inline_serializer(
+                name='BookingConfirmResponse',
+                fields={
+                    'booking_id': serializers.IntegerField(),
+                    'status': serializers.CharField(),
+                    'detail': serializers.CharField(),
+                },
+            ),
+        },
+    )
     def post(self, request, pk):
         booking = generics.get_object_or_404(
             Booking.objects.select_related('listing', 'listing__host'),
@@ -71,6 +86,19 @@ class BookingConfirmView(views.APIView):
 class BookingCancelView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=None,
+        responses={
+            200: inline_serializer(
+                name='BookingCancelResponse',
+                fields={
+                    'booking_id': serializers.IntegerField(),
+                    'status': serializers.CharField(),
+                    'detail': serializers.CharField(),
+                },
+            ),
+        },
+    )
     def post(self, request, pk):
         booking = generics.get_object_or_404(
             Booking.objects.select_related('listing', 'listing__host', 'guest'),

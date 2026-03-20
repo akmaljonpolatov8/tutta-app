@@ -1,5 +1,7 @@
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, permissions, response, status, views
+from rest_framework import serializers
 
 from .models import Listing
 from .permissions import IsHostUser, IsListingOwner
@@ -61,6 +63,10 @@ class ListingManageView(generics.RetrieveUpdateDestroyAPIView):
 class ListingPublishView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsHostUser]
 
+    @extend_schema(
+        request=None,
+        responses={200: inline_serializer(name='ListingPublishResponse', fields={'detail': serializers.CharField()})},
+    )
     def post(self, request, pk):
         listing = generics.get_object_or_404(Listing, pk=pk, host=request.user)
         listing.is_active = True
@@ -71,6 +77,10 @@ class ListingPublishView(views.APIView):
 class ListingUnpublishView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsHostUser]
 
+    @extend_schema(
+        request=None,
+        responses={200: inline_serializer(name='ListingUnpublishResponse', fields={'detail': serializers.CharField()})},
+    )
     def post(self, request, pk):
         listing = generics.get_object_or_404(Listing, pk=pk, host=request.user)
         listing.is_active = False
