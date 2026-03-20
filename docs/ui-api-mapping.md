@@ -187,6 +187,60 @@ Yoki field-level validation:
 - List:
   - `GET /api/reviews?listing_id={id}`
 
+## 3.11 Chat
+
+- Thread list:
+  - `GET /api/chat/threads`
+- Create/open thread:
+  - `POST /api/chat/threads`
+  - request:
+  ```json
+  {
+    "listing": 12,
+    "guest_id": 45,
+    "host_id": 9
+  }
+  ```
+- Messages list:
+  - `GET /api/chat/threads/{thread_id}/messages`
+- Send message:
+  - `POST /api/chat/threads/{thread_id}/messages`
+  - request:
+  ```json
+  {
+    "content": "Assalomu alaykum, listing bo'shmi?"
+  }
+  ```
+
+## 3.12 Payments
+
+- Create payment intent:
+  - `POST /api/payments/intents`
+  - request:
+  ```json
+  {
+    "booking": 101,
+    "provider": "click",
+    "currency": "UZS"
+  }
+  ```
+- List my/host-related payments:
+  - `GET /api/payments/intents`
+- Payment detail:
+  - `GET /api/payments/intents/{id}`
+- Provider webhook callback:
+  - `POST /api/payments/webhooks/{provider}`
+  - header:
+    - `X-Webhook-Secret: <secret>`
+  - request:
+  ```json
+  {
+    "provider_payment_id": "uuid-or-provider-id",
+    "status": "succeeded",
+    "payload": {}
+  }
+  ```
+
 ## 4. Flutter Integration Checklist
 
 - Auth token storage (secure storage).

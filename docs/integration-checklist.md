@@ -104,9 +104,10 @@ Bu checklist Flutter va Backend jamoasi bir xil ketma-ketlikda ishlashi uchun.
 ## 4.5 Chat
 
 - Backend:
-  - [ ] Thread list endpoint
-  - [ ] Message list endpoint
-  - [ ] Send message endpoint
+  - [ ] `GET /api/chat/threads`
+  - [ ] `POST /api/chat/threads`
+  - [ ] `GET /api/chat/threads/{thread_id}/messages`
+  - [ ] `POST /api/chat/threads/{thread_id}/messages`
 - Mobile:
   - [ ] Chat list connected
   - [ ] Thread messages connected
@@ -115,8 +116,10 @@ Bu checklist Flutter va Backend jamoasi bir xil ketma-ketlikda ishlashi uchun.
 ## 4.6 Payments
 
 - Backend:
-  - [ ] Payment init endpoint
-  - [ ] Payment webhook endpoint
+  - [ ] `POST /api/payments/intents`
+  - [ ] `GET /api/payments/intents`
+  - [ ] `GET /api/payments/intents/{id}`
+  - [ ] `POST /api/payments/webhooks/{provider}`
   - [ ] Booking-payment link ready
 - Mobile:
   - [ ] Payment UI connected
@@ -129,6 +132,8 @@ Bu checklist Flutter va Backend jamoasi bir xil ketma-ketlikda ishlashi uchun.
 - [ ] Booking create -> host confirm
 - [ ] Booking cancel
 - [ ] Review create/list
+- [ ] Chat thread create -> send message
+- [ ] Payment intent create -> webhook success
 
 ## 6. PR Checklist
 
