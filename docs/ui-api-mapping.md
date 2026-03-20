@@ -187,6 +187,31 @@ Yoki field-level validation:
 - List:
   - `GET /api/reviews?listing_id={id}`
 
+## 3.11 Chat
+
+- Thread list:
+  - `GET /api/chat/threads`
+- Create/open thread:
+  - `POST /api/chat/threads`
+  - request:
+  ```json
+  {
+    "listing": 12,
+    "guest_id": 45,
+    "host_id": 9
+  }
+  ```
+- Messages list:
+  - `GET /api/chat/threads/{thread_id}/messages`
+- Send message:
+  - `POST /api/chat/threads/{thread_id}/messages`
+  - request:
+  ```json
+  {
+    "content": "Assalomu alaykum, listing bo'shmi?"
+  }
+  ```
+
 ## 4. Flutter Integration Checklist
 
 - Auth token storage (secure storage).
