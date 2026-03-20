@@ -52,6 +52,10 @@ Agar `password authentication failed` chiqsa, `.env`dagi `POSTGRES_USER/POSTGRES
 - `POST /api/bookings/{id}/cancel` (guest or host)
 - `POST /api/reviews`
 - `GET /api/reviews`
+- `GET /api/chat/threads`
+- `POST /api/chat/threads`
+- `GET /api/chat/threads/{thread_id}/messages`
+- `POST /api/chat/threads/{thread_id}/messages`
 
 ## 3) Git workflow (clean)
 

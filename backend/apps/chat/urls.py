@@ -1,7 +1,8 @@
 from django.urls import path
 
-from .views import ChatHealthView
+from .views import MessageListCreateView, ThreadListCreateView
 
 urlpatterns = [
-    path('health', ChatHealthView.as_view(), name='chat-health'),
+    path('threads', ThreadListCreateView.as_view(), name='chat-threads'),
+    path('threads/<int:thread_id>/messages', MessageListCreateView.as_view(), name='chat-thread-messages'),
 ]
