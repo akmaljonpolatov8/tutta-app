@@ -1,7 +1,9 @@
 from django.urls import path
 
-from .views import PaymentsHealthView
+from .views import PaymentIntentDetailView, PaymentIntentListCreateView, PaymentWebhookView
 
 urlpatterns = [
-    path('health', PaymentsHealthView.as_view(), name='payments-health'),
+    path('intents', PaymentIntentListCreateView.as_view(), name='payments-intents'),
+    path('intents/<int:pk>', PaymentIntentDetailView.as_view(), name='payments-intent-detail'),
+    path('webhooks/<str:provider>', PaymentWebhookView.as_view(), name='payments-webhook'),
 ]
