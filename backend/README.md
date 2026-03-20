@@ -56,6 +56,10 @@ Agar `password authentication failed` chiqsa, `.env`dagi `POSTGRES_USER/POSTGRES
 - `POST /api/chat/threads`
 - `GET /api/chat/threads/{thread_id}/messages`
 - `POST /api/chat/threads/{thread_id}/messages`
+- `GET /api/payments/intents`
+- `POST /api/payments/intents`
+- `GET /api/payments/intents/{id}`
+- `POST /api/payments/webhooks/{provider}`
 
 ## 3) Git workflow (clean)
 
