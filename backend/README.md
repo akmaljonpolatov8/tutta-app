@@ -40,6 +40,9 @@ Agar `password authentication failed` chiqsa, `.env`dagi `POSTGRES_USER/POSTGRES
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/users/me`
+- `GET /api/health`
+- `GET /api/schema/`
+- `GET /api/docs/`
 - `POST /api/listings`
 - `GET /api/listings`
 - `GET /api/listings/{id}`
@@ -60,6 +63,12 @@ Agar `password authentication failed` chiqsa, `.env`dagi `POSTGRES_USER/POSTGRES
 - `POST /api/payments/intents`
 - `GET /api/payments/intents/{id}`
 - `POST /api/payments/webhooks/{provider}`
+
+## 2.1 Test
+
+```bash
+python manage.py test
+```
 
 ## 3) Git workflow (clean)
 

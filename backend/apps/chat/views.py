@@ -10,6 +10,8 @@ class ThreadListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Thread.objects.none()
         return (
             Thread.objects.select_related('guest', 'host', 'listing')
             .prefetch_related('messages')
@@ -26,6 +28,8 @@ class MessageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Message.objects.none()
         return (
             Message.objects.select_related('sender', 'thread')
             .filter(Q(thread__guest=self.request.user) | Q(thread__host=self.request.user))

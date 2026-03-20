@@ -11,6 +11,8 @@ class PaymentIntentListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Payment.objects.none()
         return (
             Payment.objects.select_related('booking', 'booking__guest', 'booking__listing', 'booking__listing__host')
             .filter(Q(booking__guest=self.request.user) | Q(booking__listing__host=self.request.user))
@@ -27,6 +29,8 @@ class PaymentIntentDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Payment.objects.none()
         return (
             Payment.objects.select_related('booking', 'booking__guest', 'booking__listing', 'booking__listing__host')
             .filter(Q(booking__guest=self.request.user) | Q(booking__listing__host=self.request.user))

@@ -18,6 +18,8 @@ class BookingListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Booking.objects.select_related('listing', 'guest', 'listing__host')
+        if not self.request.user.is_authenticated:
+            return queryset.none()
         role = self.request.query_params.get('role')
 
         if role == 'host':

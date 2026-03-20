@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'drf_spectacular',
     'django_filters',
     'apps.users',
     'apps.listings',
@@ -116,6 +117,7 @@ REST_FRAMEWORK = {
         'auth_logout': os.getenv('THROTTLE_AUTH_LOGOUT', '60/hour'),
         'users_me': os.getenv('THROTTLE_USERS_ME', '120/hour'),
     },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
@@ -125,4 +127,11 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Tutta Backend API',
+    'DESCRIPTION': 'API documentation for Tutta rental marketplace backend.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
