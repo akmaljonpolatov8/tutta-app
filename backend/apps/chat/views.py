@@ -1,6 +1,6 @@
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, throttling
 
 from .models import Message, Thread
 from .serializers import MessageCreateSerializer, MessageSerializer, ThreadCreateSerializer, ThreadSerializer
@@ -8,6 +8,8 @@ from .serializers import MessageCreateSerializer, MessageSerializer, ThreadCreat
 
 class ThreadListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'chat_threads'
 
     def get_queryset(self):
         if not self.request.user.is_authenticated:
@@ -26,6 +28,8 @@ class ThreadListCreateView(generics.ListCreateAPIView):
 
 class MessageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'chat_messages'
 
     def get_queryset(self):
         if not self.request.user.is_authenticated:

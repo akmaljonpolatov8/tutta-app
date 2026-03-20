@@ -2,7 +2,7 @@ import os
 
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import generics, permissions, response, status, views
+from rest_framework import generics, permissions, response, status, throttling, views
 from rest_framework import serializers
 
 from .models import Payment
@@ -11,6 +11,8 @@ from .serializers import PaymentIntentCreateSerializer, PaymentSerializer, Payme
 
 class PaymentIntentListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'payments_intents'
 
     def get_queryset(self):
         if not self.request.user.is_authenticated:
@@ -42,6 +44,8 @@ class PaymentIntentDetailView(generics.RetrieveAPIView):
 class PaymentWebhookView(views.APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'payments_webhook'
 
     @extend_schema(
         request=PaymentWebhookSerializer,
@@ -51,6 +55,9 @@ class PaymentWebhookView(views.APIView):
         },
     )
     def post(self, request, provider):
+        if provider not in Payment.Provider.values:
+            return response.Response({'detail': 'Unsupported payment provider.'}, status=status.HTTP_400_BAD_REQUEST)
+
         secret = os.getenv(f'PAYMENT_WEBHOOK_SECRET_{provider.upper()}', '').strip()
         provided = request.headers.get('X-Webhook-Secret', '').strip()
 

@@ -67,7 +67,7 @@ Agar `password authentication failed` chiqsa, `.env`dagi `POSTGRES_USER/POSTGRES
 ## 2.1 Test
 
 ```bash
-python manage.py test
+python manage.py test apps.users apps.listings apps.bookings apps.reviews apps.chat apps.payments
 ```
 
 ## 3) Git workflow (clean)

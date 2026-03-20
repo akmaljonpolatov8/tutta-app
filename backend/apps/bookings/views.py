@@ -4,7 +4,7 @@ from django.db.models import Q
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from rest_framework import generics, permissions, response, status, views
+from rest_framework import generics, permissions, response, status, throttling, views
 
 from .models import Booking
 from .serializers import BookingCreateSerializer, BookingSerializer
@@ -12,11 +12,16 @@ from .serializers import BookingCreateSerializer, BookingSerializer
 
 class BookingListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [throttling.ScopedRateThrottle]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return BookingCreateSerializer
         return BookingSerializer
+
+    def get_throttles(self):
+        self.throttle_scope = 'bookings_write' if self.request.method == 'POST' else 'bookings_list'
+        return super().get_throttles()
 
     def get_queryset(self):
         queryset = Booking.objects.select_related('listing', 'guest', 'listing__host')
@@ -42,6 +47,8 @@ class BookingListCreateView(generics.ListCreateAPIView):
 
 class BookingConfirmView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'bookings_action'
 
     @extend_schema(
         request=None,
@@ -85,6 +92,8 @@ class BookingConfirmView(views.APIView):
 
 class BookingCancelView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'bookings_action'
 
     @extend_schema(
         request=None,

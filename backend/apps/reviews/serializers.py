@@ -1,3 +1,5 @@
+from datetime import date
+
 from rest_framework import serializers
 
 from apps.bookings.models import Booking
@@ -20,6 +22,12 @@ class ReviewSerializer(serializers.ModelSerializer):
 
         if booking.status != Booking.Status.CONFIRMED:
             raise serializers.ValidationError('Only confirmed bookings can be reviewed.')
+
+        if booking.end_date > date.today():
+            raise serializers.ValidationError('You can review only after checkout date.')
+
+        if Review.objects.filter(booking=booking).exists():
+            raise serializers.ValidationError('Review already exists for this booking.')
 
         return booking
 

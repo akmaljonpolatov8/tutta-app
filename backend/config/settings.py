@@ -8,7 +8,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me')
+SECRET_KEY = os.getenv('SECRET_KEY', 'replace-this-with-a-strong-secret-key-at-least-32-characters')
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
@@ -116,7 +116,21 @@ REST_FRAMEWORK = {
         'auth_refresh': os.getenv('THROTTLE_AUTH_REFRESH', '60/hour'),
         'auth_logout': os.getenv('THROTTLE_AUTH_LOGOUT', '60/hour'),
         'users_me': os.getenv('THROTTLE_USERS_ME', '120/hour'),
+        'listings_list': os.getenv('THROTTLE_LISTINGS_LIST', '300/hour'),
+        'listings_write': os.getenv('THROTTLE_LISTINGS_WRITE', '120/hour'),
+        'listings_action': os.getenv('THROTTLE_LISTINGS_ACTION', '120/hour'),
+        'bookings_list': os.getenv('THROTTLE_BOOKINGS_LIST', '300/hour'),
+        'bookings_write': os.getenv('THROTTLE_BOOKINGS_WRITE', '120/hour'),
+        'bookings_action': os.getenv('THROTTLE_BOOKINGS_ACTION', '120/hour'),
+        'reviews_list': os.getenv('THROTTLE_REVIEWS_LIST', '300/hour'),
+        'reviews_write': os.getenv('THROTTLE_REVIEWS_WRITE', '120/hour'),
+        'chat_threads': os.getenv('THROTTLE_CHAT_THREADS', '300/hour'),
+        'chat_messages': os.getenv('THROTTLE_CHAT_MESSAGES', '600/hour'),
+        'payments_intents': os.getenv('THROTTLE_PAYMENTS_INTENTS', '120/hour'),
+        'payments_webhook': os.getenv('THROTTLE_PAYMENTS_WEBHOOK', '300/hour'),
     },
+    'DEFAULT_PAGINATION_CLASS': 'config.pagination.DefaultPageNumberPagination',
+    'PAGE_SIZE': int(os.getenv('API_PAGE_SIZE', '20')),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 

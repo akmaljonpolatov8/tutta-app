@@ -1,6 +1,6 @@
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import generics, permissions, response, status, views
+from rest_framework import generics, permissions, response, status, throttling, views
 from rest_framework import serializers
 
 from .models import Listing
@@ -23,6 +23,10 @@ class ListingListCreateView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return ListingCreateSerializer
         return ListingSerializer
+
+    def get_throttles(self):
+        self.throttle_scope = 'listings_write' if self.request.method == 'POST' else 'listings_list'
+        return super().get_throttles()
 
     def get_queryset(self):
         queryset = self.queryset.filter(is_active=True)
@@ -53,6 +57,8 @@ class ListingManageView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Listing.objects.select_related('host').prefetch_related('images')
     serializer_class = ListingCreateSerializer
     permission_classes = [permissions.IsAuthenticated, IsHostUser, IsListingOwner]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'listings_write'
 
     def perform_destroy(self, instance):
         # Soft delete keeps booking/review history intact.
@@ -62,6 +68,8 @@ class ListingManageView(generics.RetrieveUpdateDestroyAPIView):
 
 class ListingPublishView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsHostUser]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'listings_action'
 
     @extend_schema(
         request=None,
@@ -76,6 +84,8 @@ class ListingPublishView(views.APIView):
 
 class ListingUnpublishView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, IsHostUser]
+    throttle_classes = [throttling.ScopedRateThrottle]
+    throttle_scope = 'listings_action'
 
     @extend_schema(
         request=None,
@@ -86,3 +96,4 @@ class ListingUnpublishView(views.APIView):
         listing.is_active = False
         listing.save(update_fields=['is_active', 'updated_at'])
         return response.Response({'detail': 'Listing unpublished.'}, status=status.HTTP_200_OK)
+    throttle_classes = [throttling.ScopedRateThrottle]
