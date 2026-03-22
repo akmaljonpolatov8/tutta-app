@@ -27,6 +27,7 @@ class _TuttaAppState extends ConsumerState<TuttaApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    ref.watch(notificationsAuthScopeSyncProvider);
     ref.watch(notificationsPushSyncProvider);
 
     return MaterialApp.router(

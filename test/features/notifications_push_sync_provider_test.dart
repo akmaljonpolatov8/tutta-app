@@ -10,6 +10,42 @@ import 'package:tutta/features/notifications/domain/repositories/notifications_r
 import 'package:tutta/features/premium/domain/models/subscription_plan.dart';
 
 void main() {
+  test(
+    'notifications auth scope reset clears push state on sign out',
+    () async {
+      final repository = _CountingNotificationsRepository();
+      late AuthController authController;
+
+      final container = ProviderContainer(
+        overrides: [
+          notificationsRepositoryProvider.overrideWithValue(repository),
+          authControllerProvider.overrideWith((ref) {
+            authController = AuthController(_NoopAuthRepository(), ref)
+              ..state = AsyncValue<AuthState>.data(
+                AuthState.initial().copyWith(user: _testUser('u-1')),
+              );
+            return authController;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(notificationsAuthScopeSyncProvider);
+      container.read(pushReadyProvider.notifier).state = true;
+      container.read(pushFcmTokenProvider.notifier).state = 'tok_1';
+      container.read(pushSyncErrorProvider.notifier).state = 'err';
+
+      authController.state = const AsyncValue<AuthState>.data(
+        AuthState.initial(),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(pushReadyProvider), isFalse);
+      expect(container.read(pushFcmTokenProvider), isNull);
+      expect(container.read(pushSyncErrorProvider), isNull);
+    },
+  );
+
   test('notifications push sync deduplicates same user/token pair', () async {
     final repository = _CountingNotificationsRepository();
     final authState = AsyncValue<AuthState>.data(
@@ -50,7 +86,44 @@ void main() {
   });
 
   test(
-    'notifications push sync stores error and retries after failure',
+    'notifications push sync re-registers token after user switch',
+    () async {
+      final repository = _CountingNotificationsRepository();
+      late AuthController authController;
+
+      final container = ProviderContainer(
+        overrides: [
+          notificationsRepositoryProvider.overrideWithValue(repository),
+          authControllerProvider.overrideWith((ref) {
+            authController = AuthController(_NoopAuthRepository(), ref)
+              ..state = AsyncValue<AuthState>.data(
+                AuthState.initial().copyWith(user: _testUser('u-1')),
+              );
+            return authController;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(notificationsAuthScopeSyncProvider);
+      container.read(pushFcmTokenProvider.notifier).state = 'tok_shared';
+      await container.read(notificationsPushSyncProvider.future);
+
+      expect(repository.registerCalls, 1);
+
+      authController.state = AsyncValue<AuthState>.data(
+        AuthState.initial().copyWith(user: _testUser('u-2')),
+      );
+      await Future<void>.delayed(Duration.zero);
+      container.refresh(notificationsPushSyncProvider);
+      await container.read(notificationsPushSyncProvider.future);
+
+      expect(repository.registerCalls, 2);
+    },
+  );
+
+  test(
+    'notifications push sync stores error and retries after manual trigger',
     () async {
       final repository = _CountingNotificationsRepository()..shouldThrow = true;
       final authState = AsyncValue<AuthState>.data(
@@ -84,7 +157,7 @@ void main() {
       expect(container.read(pushSyncErrorProvider), isNotNull);
 
       repository.shouldThrow = false;
-      container.refresh(notificationsPushSyncProvider);
+      container.read(notificationsControllerProvider).retryPushSync();
       await container.read(notificationsPushSyncProvider.future);
 
       expect(repository.registerCalls, 2);
@@ -137,4 +210,14 @@ class _NoopAuthRepository implements AuthRepository {
   Future<AuthUser> verifyOtp({required String phone, required String code}) {
     throw UnimplementedError();
   }
+}
+
+AuthUser _testUser(String id) {
+  return AuthUser(
+    id: id,
+    phone: '+998901234567',
+    displayName: 'User $id',
+    subscriptionPlan: SubscriptionPlan.free,
+    countryCode: 'UZ',
+  );
 }

@@ -72,6 +72,14 @@ class SettingsScreen extends ConsumerWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              trailing: TextButton(
+                onPressed: token == null || token.isEmpty
+                    ? null
+                    : () => ref
+                          .read(notificationsControllerProvider)
+                          .retryPushSync(),
+                child: const Text('Retry'),
+              ),
             ),
           const ListTile(
             leading: Icon(Icons.privacy_tip_outlined),

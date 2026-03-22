@@ -46,7 +46,31 @@ final pushSyncErrorProvider = StateProvider<String?>((ref) => null);
 
 final _lastSyncedPushKeyProvider = StateProvider<String?>((ref) => null);
 
+final _pushSyncRetryNonceProvider = StateProvider<int>((ref) => 0);
+
+final _authUserIdProvider = Provider<String?>((ref) {
+  return ref.watch(authControllerProvider).valueOrNull?.user?.id;
+});
+
+final notificationsAuthScopeSyncProvider = Provider<void>((ref) {
+  ref.listen<String?>(_authUserIdProvider, (previous, next) {
+    if (previous == next) {
+      return;
+    }
+
+    ref.read(_lastSyncedPushKeyProvider.notifier).state = null;
+    ref.read(pushSyncErrorProvider.notifier).state = null;
+    ref.read(_pushSyncRetryNonceProvider.notifier).state = 0;
+
+    if (next == null) {
+      ref.read(pushFcmTokenProvider.notifier).state = null;
+      ref.read(pushReadyProvider.notifier).state = false;
+    }
+  });
+});
+
 final notificationsPushSyncProvider = FutureProvider<void>((ref) async {
+  ref.watch(_pushSyncRetryNonceProvider);
   final userId = ref.watch(authControllerProvider).valueOrNull?.user?.id;
   final fcmToken = ref.watch(pushFcmTokenProvider);
 
@@ -124,6 +148,12 @@ class NotificationsController {
     );
 
     await _ref.read(notificationsRepositoryProvider).pushLocal(item);
+  }
+
+  void retryPushSync() {
+    _ref
+        .read(_pushSyncRetryNonceProvider.notifier)
+        .update((state) => state + 1);
   }
 }
 
