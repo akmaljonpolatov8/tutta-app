@@ -44,6 +44,18 @@ final pushReadyProvider = StateProvider<bool>((ref) => false);
 
 final pushSyncErrorProvider = StateProvider<String?>((ref) => null);
 
+final pushAutoRetryEnabledProvider = Provider<bool>((ref) => true);
+
+final pushAutoRetryMaxAttemptsProvider = Provider<int>((ref) => 5);
+
+final pushSyncBackoffAttemptProvider = StateProvider<int>((ref) => 0);
+
+final pushSyncRetryingProvider = StateProvider<bool>((ref) => false);
+
+final pushSyncAutoRetryExhaustedProvider = StateProvider<bool>((ref) => false);
+
+final _pushSyncRetryScheduleVersionProvider = StateProvider<int>((ref) => 0);
+
 final _lastSyncedPushKeyProvider = StateProvider<String?>((ref) => null);
 
 final _pushSyncRetryNonceProvider = StateProvider<int>((ref) => 0);
@@ -60,6 +72,12 @@ final notificationsAuthScopeSyncProvider = Provider<void>((ref) {
 
     ref.read(_lastSyncedPushKeyProvider.notifier).state = null;
     ref.read(pushSyncErrorProvider.notifier).state = null;
+    ref.read(pushSyncBackoffAttemptProvider.notifier).state = 0;
+    ref.read(pushSyncRetryingProvider.notifier).state = false;
+    ref.read(pushSyncAutoRetryExhaustedProvider.notifier).state = false;
+    ref
+        .read(_pushSyncRetryScheduleVersionProvider.notifier)
+        .update((state) => state + 1);
     ref.read(_pushSyncRetryNonceProvider.notifier).state = 0;
 
     if (next == null) {
@@ -77,6 +95,9 @@ final notificationsPushSyncProvider = FutureProvider<void>((ref) async {
   if (userId == null || fcmToken == null || fcmToken.isEmpty) {
     ref.read(_lastSyncedPushKeyProvider.notifier).state = null;
     ref.read(pushSyncErrorProvider.notifier).state = null;
+    ref.read(pushSyncBackoffAttemptProvider.notifier).state = 0;
+    ref.read(pushSyncRetryingProvider.notifier).state = false;
+    ref.read(pushSyncAutoRetryExhaustedProvider.notifier).state = false;
     return;
   }
 
@@ -92,10 +113,83 @@ final notificationsPushSyncProvider = FutureProvider<void>((ref) async {
         .registerDeviceToken(userId: userId, fcmToken: fcmToken);
     ref.read(_lastSyncedPushKeyProvider.notifier).state = syncKey;
     ref.read(pushSyncErrorProvider.notifier).state = null;
+    ref.read(pushSyncBackoffAttemptProvider.notifier).state = 0;
+    ref.read(pushSyncRetryingProvider.notifier).state = false;
+    ref.read(pushSyncAutoRetryExhaustedProvider.notifier).state = false;
   } catch (error) {
     ref.read(pushSyncErrorProvider.notifier).state = error.toString();
+
+    final attempt = ref
+        .read(pushSyncBackoffAttemptProvider.notifier)
+        .update((state) => state + 1);
+    final autoRetryEnabled = ref.read(pushAutoRetryEnabledProvider);
+    final maxAttempts = ref.read(pushAutoRetryMaxAttemptsProvider);
+    final shouldSchedule = pushSyncShouldScheduleAutoRetry(
+      attempt: attempt,
+      maxAttempts: maxAttempts,
+    );
+
+    if (!autoRetryEnabled || !shouldSchedule) {
+      ref.read(pushSyncRetryingProvider.notifier).state = false;
+      ref.read(pushSyncAutoRetryExhaustedProvider.notifier).state =
+          autoRetryEnabled && !shouldSchedule;
+      return;
+    }
+
+    ref.read(pushSyncAutoRetryExhaustedProvider.notifier).state = false;
+    ref.read(pushSyncRetryingProvider.notifier).state = true;
+    final scheduleVersion = ref.read(_pushSyncRetryScheduleVersionProvider);
+    await Future<void>.delayed(pushSyncRetryDelayForAttempt(attempt));
+
+    final stillValid = pushSyncRetryScheduleStillValid(
+      scheduledVersion: scheduleVersion,
+      currentVersion: ref.read(_pushSyncRetryScheduleVersionProvider),
+    );
+    if (!stillValid) {
+      ref.read(pushSyncRetryingProvider.notifier).state = false;
+      return;
+    }
+
+    ref.read(pushSyncRetryingProvider.notifier).state = false;
+
+    final currentUserId = ref
+        .read(authControllerProvider)
+        .valueOrNull
+        ?.user
+        ?.id;
+    final currentToken = ref.read(pushFcmTokenProvider);
+    final hasError = ref.read(pushSyncErrorProvider) != null;
+    if (hasError && currentUserId == userId && currentToken == fcmToken) {
+      ref
+          .read(_pushSyncRetryNonceProvider.notifier)
+          .update((state) => state + 1);
+    }
   }
 });
+
+Duration pushSyncRetryDelayForAttempt(int attempt) {
+  final safeAttempt = attempt <= 0 ? 1 : attempt;
+  final seconds = 1 << (safeAttempt - 1);
+  final clampedSeconds = seconds > 32 ? 32 : seconds;
+  return Duration(seconds: clampedSeconds);
+}
+
+bool pushSyncShouldScheduleAutoRetry({
+  required int attempt,
+  required int maxAttempts,
+}) {
+  if (maxAttempts <= 0) {
+    return false;
+  }
+  return attempt <= maxAttempts;
+}
+
+bool pushSyncRetryScheduleStillValid({
+  required int scheduledVersion,
+  required int currentVersion,
+}) {
+  return scheduledVersion == currentVersion;
+}
 
 class NotificationsController {
   const NotificationsController(this._ref);
@@ -151,6 +245,12 @@ class NotificationsController {
   }
 
   void retryPushSync() {
+    _ref.read(pushSyncRetryingProvider.notifier).state = false;
+    _ref.read(pushSyncBackoffAttemptProvider.notifier).state = 0;
+    _ref.read(pushSyncAutoRetryExhaustedProvider.notifier).state = false;
+    _ref
+        .read(_pushSyncRetryScheduleVersionProvider.notifier)
+        .update((state) => state + 1);
     _ref
         .read(_pushSyncRetryNonceProvider.notifier)
         .update((state) => state + 1);

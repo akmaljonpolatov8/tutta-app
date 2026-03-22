@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/route_names.dart';
 import '../../../../core/enums/app_role.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../../../core/widgets/empty_state_view.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../../notifications/application/notifications_controller.dart';
@@ -18,6 +19,27 @@ class HomeShellScreen extends ConsumerStatefulWidget {
 
 class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   int _index = 0;
+  bool _isSigningOut = false;
+  ProviderSubscription<AppRole?>? _roleSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _roleSubscription = ref.listenManual<AppRole?>(
+      appSessionControllerProvider.select((session) => session.activeRole),
+      (previous, next) {
+        if (previous != next && mounted) {
+          setState(() => _index = 0);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _roleSubscription?.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +57,8 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
 
     final tabs = _tabsForRole(role);
     final destinations = _destinationsForRole(role);
-
-    if (_index >= tabs.length) {
-      _index = 0;
-    }
+    final selectedIndex = _index.clamp(0, tabs.length - 1);
+    final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -46,40 +66,97 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
         actions: [
           IconButton(
             tooltip: 'Notifications',
-            onPressed: () => context.go(RouteNames.notifications),
+            onPressed: _isSigningOut
+                ? null
+                : () => context.go(RouteNames.notifications),
             icon: Badge.count(
-              count: ref.watch(unreadNotificationsCountProvider),
-              isLabelVisible: ref.watch(unreadNotificationsCountProvider) > 0,
+              count: unreadCount,
+              isLabelVisible: unreadCount > 0,
               child: const Icon(Icons.notifications_none_outlined),
             ),
           ),
           IconButton(
             tooltip: 'Switch role',
-            onPressed: () {
-              ref.read(appSessionControllerProvider.notifier).clearRole();
-              context.go(RouteNames.roleSelector);
-            },
+            onPressed: _isSigningOut ? null : _onSwitchRolePressed,
             icon: const Icon(Icons.swap_horiz),
           ),
           IconButton(
             tooltip: 'Sign out',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) {
-                context.go(RouteNames.auth);
-              }
-            },
-            icon: const Icon(Icons.logout),
+            onPressed: _isSigningOut ? null : _onSignOutPressed,
+            icon: _isSigningOut
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.logout),
           ),
         ],
       ),
-      body: tabs[_index],
+      body: tabs[selectedIndex],
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        selectedIndex: selectedIndex,
+        onDestinationSelected: _isSigningOut
+            ? null
+            : (value) {
+                if (value == _index) {
+                  return;
+                }
+                setState(() => _index = value);
+              },
         destinations: destinations,
       ),
     );
+  }
+
+  void _onSwitchRolePressed() {
+    ref.read(appSessionControllerProvider.notifier).clearRole();
+    context.go(RouteNames.roleSelector);
+  }
+
+  Future<void> _onSignOutPressed() async {
+    if (_isSigningOut) {
+      return;
+    }
+
+    setState(() => _isSigningOut = true);
+    Object? signOutError;
+
+    try {
+      await ref.read(authControllerProvider.notifier).signOut();
+    } on AppException catch (error) {
+      signOutError = error;
+    } catch (error) {
+      signOutError = error;
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningOut = false);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (signOutError == null) {
+      final authState = ref.read(authControllerProvider);
+      if (authState.hasError) {
+        signOutError = authState.error;
+      }
+    }
+
+    if (signOutError != null) {
+      final message = signOutError is AppException
+          ? signOutError.message
+          : 'Failed to sign out. Please try again.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+
+    ref.read(appSessionControllerProvider.notifier).clearRole();
+    context.go(RouteNames.auth);
   }
 
   List<Widget> _tabsForRole(AppRole role) {

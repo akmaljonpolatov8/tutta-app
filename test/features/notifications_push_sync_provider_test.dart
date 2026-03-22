@@ -10,6 +10,37 @@ import 'package:tutta/features/notifications/domain/repositories/notifications_r
 import 'package:tutta/features/premium/domain/models/subscription_plan.dart';
 
 void main() {
+  test('push sync retry delay grows exponentially and is capped', () {
+    expect(pushSyncRetryDelayForAttempt(1), const Duration(seconds: 1));
+    expect(pushSyncRetryDelayForAttempt(2), const Duration(seconds: 2));
+    expect(pushSyncRetryDelayForAttempt(3), const Duration(seconds: 4));
+    expect(pushSyncRetryDelayForAttempt(10), const Duration(seconds: 32));
+  });
+
+  test('push sync auto retry scheduling respects max attempts', () {
+    expect(pushSyncShouldScheduleAutoRetry(attempt: 1, maxAttempts: 3), isTrue);
+    expect(pushSyncShouldScheduleAutoRetry(attempt: 3, maxAttempts: 3), isTrue);
+    expect(
+      pushSyncShouldScheduleAutoRetry(attempt: 4, maxAttempts: 3),
+      isFalse,
+    );
+    expect(
+      pushSyncShouldScheduleAutoRetry(attempt: 1, maxAttempts: 0),
+      isFalse,
+    );
+  });
+
+  test('push sync scheduled retry validity matches version equality', () {
+    expect(
+      pushSyncRetryScheduleStillValid(scheduledVersion: 4, currentVersion: 4),
+      isTrue,
+    );
+    expect(
+      pushSyncRetryScheduleStillValid(scheduledVersion: 4, currentVersion: 5),
+      isFalse,
+    );
+  });
+
   test(
     'notifications auth scope reset clears push state on sign out',
     () async {
@@ -19,6 +50,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           notificationsRepositoryProvider.overrideWithValue(repository),
+          pushAutoRetryEnabledProvider.overrideWithValue(false),
           authControllerProvider.overrideWith((ref) {
             authController = AuthController(_NoopAuthRepository(), ref)
               ..state = AsyncValue<AuthState>.data(
@@ -63,6 +95,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         notificationsRepositoryProvider.overrideWithValue(repository),
+        pushAutoRetryEnabledProvider.overrideWithValue(false),
         authControllerProvider.overrideWith((ref) {
           final controller = AuthController(_NoopAuthRepository(), ref);
           controller.state = authState;
@@ -94,6 +127,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           notificationsRepositoryProvider.overrideWithValue(repository),
+          pushAutoRetryEnabledProvider.overrideWithValue(false),
           authControllerProvider.overrideWith((ref) {
             authController = AuthController(_NoopAuthRepository(), ref)
               ..state = AsyncValue<AuthState>.data(
@@ -141,6 +175,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           notificationsRepositoryProvider.overrideWithValue(repository),
+          pushAutoRetryEnabledProvider.overrideWithValue(false),
           authControllerProvider.overrideWith((ref) {
             final controller = AuthController(_NoopAuthRepository(), ref);
             controller.state = authState;
@@ -155,13 +190,59 @@ void main() {
 
       expect(repository.registerCalls, 1);
       expect(container.read(pushSyncErrorProvider), isNotNull);
+      expect(container.read(pushSyncBackoffAttemptProvider), 1);
 
       repository.shouldThrow = false;
       container.read(notificationsControllerProvider).retryPushSync();
+      expect(container.read(pushSyncBackoffAttemptProvider), 0);
+      expect(container.read(pushSyncRetryingProvider), isFalse);
       await container.read(notificationsPushSyncProvider.future);
 
       expect(repository.registerCalls, 2);
       expect(container.read(pushSyncErrorProvider), isNull);
+    },
+  );
+
+  test(
+    'notifications push sync marks exhausted when max auto-retry is reached and recovers after manual retry',
+    () async {
+      final repository = _CountingNotificationsRepository()..shouldThrow = true;
+      final authState = AsyncValue<AuthState>.data(
+        AuthState.initial().copyWith(user: _testUser('u-1')),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          notificationsRepositoryProvider.overrideWithValue(repository),
+          pushAutoRetryEnabledProvider.overrideWithValue(true),
+          pushAutoRetryMaxAttemptsProvider.overrideWithValue(0),
+          authControllerProvider.overrideWith((ref) {
+            final controller = AuthController(_NoopAuthRepository(), ref);
+            controller.state = authState;
+            return controller;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(pushFcmTokenProvider.notifier).state = 'tok_1';
+      await container.read(notificationsPushSyncProvider.future);
+
+      expect(repository.registerCalls, 1);
+      expect(container.read(pushSyncRetryingProvider), isFalse);
+      expect(container.read(pushSyncAutoRetryExhaustedProvider), isTrue);
+      expect(container.read(pushSyncBackoffAttemptProvider), 1);
+
+      repository.shouldThrow = false;
+      container.read(notificationsControllerProvider).retryPushSync();
+      expect(container.read(pushSyncAutoRetryExhaustedProvider), isFalse);
+      expect(container.read(pushSyncBackoffAttemptProvider), 0);
+
+      await container.read(notificationsPushSyncProvider.future);
+
+      expect(repository.registerCalls, 2);
+      expect(container.read(pushSyncErrorProvider), isNull);
+      expect(container.read(pushSyncAutoRetryExhaustedProvider), isFalse);
     },
   );
 }

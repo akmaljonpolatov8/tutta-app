@@ -12,6 +12,10 @@ class SettingsScreen extends ConsumerWidget {
     final pushReady = ref.watch(pushReadyProvider);
     final token = ref.watch(pushFcmTokenProvider);
     final pushSyncError = ref.watch(pushSyncErrorProvider);
+    final pushSyncRetrying = ref.watch(pushSyncRetryingProvider);
+    final pushBackoffAttempt = ref.watch(pushSyncBackoffAttemptProvider);
+    final pushRetryMaxAttempts = ref.watch(pushAutoRetryMaxAttemptsProvider);
+    final pushRetryExhausted = ref.watch(pushSyncAutoRetryExhaustedProvider);
     final setupMode = FirebasePushService.instance.setupMode;
 
     return Scaffold(
@@ -68,7 +72,11 @@ class SettingsScreen extends ConsumerWidget {
               ),
               title: const Text('Push sync error'),
               subtitle: Text(
-                pushSyncError,
+                pushSyncRetrying
+                    ? '$pushSyncError\nAuto retry in progress (attempt $pushBackoffAttempt/$pushRetryMaxAttempts).'
+                    : pushRetryExhausted
+                    ? '$pushSyncError\nAuto retry limit reached ($pushRetryMaxAttempts attempts).'
+                    : pushSyncError,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
