@@ -16,4 +16,7 @@ abstract final class RouteNames {
   static const premiumPaywall = '/premium';
   static const support = '/support';
   static const settings = '/settings';
+  static const hostListingEditor = '/host-listing-editor';
+  static const profileVerification = '/profile-verification';
+  static const notifications = '/notifications';
 }

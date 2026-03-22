@@ -41,4 +41,32 @@ class ApiEndpoints {
 
   static String reviewsByListing(String listingId) =>
       '$reviews/listing/$listingId';
+
+  static String chatThreads(String userId) => '/chat/threads/$userId';
+
+  static String chatSendMessage(String conversationId) =>
+      '/chat/threads/$conversationId/messages';
+
+  static String notifications(String userId) => '/notifications/$userId';
+
+  static String notificationRead(String userId, String notificationId) =>
+      '/notifications/$userId/$notificationId/read';
+
+  static String notificationsReadAll(String userId) =>
+      '/notifications/$userId/read-all';
+
+  static String notificationsRegisterDevice(String userId) =>
+      '/notifications/$userId/devices';
+
+  static String hostListingDraft(String hostId) =>
+      '/host-listings/$hostId/draft';
+
+  static String hostListingPublish(String hostId) =>
+      '/host-listings/$hostId/publish';
+
+  static String hostListingUpload(String hostId) =>
+      '/host-listings/$hostId/media';
+
+  static String profileVerification(String userId) =>
+      '/profile/verification/$userId';
 }

@@ -20,4 +20,24 @@ class RuntimeFlags {
     'USE_FAKE_REVIEWS',
     defaultValue: true,
   );
+
+  static const bool useFakeChat = bool.fromEnvironment(
+    'USE_FAKE_CHAT',
+    defaultValue: true,
+  );
+
+  static const bool useFakeNotifications = bool.fromEnvironment(
+    'USE_FAKE_NOTIFICATIONS',
+    defaultValue: true,
+  );
+
+  static const bool useFakeHostListing = bool.fromEnvironment(
+    'USE_FAKE_HOST_LISTING',
+    defaultValue: true,
+  );
+
+  static const bool useFakeProfileVerification = bool.fromEnvironment(
+    'USE_FAKE_PROFILE_VERIFICATION',
+    defaultValue: true,
+  );
 }

@@ -12,11 +12,14 @@ import '../../features/bookings/presentation/screens/my_bookings_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/home/application/app_session_controller.dart';
 import '../../features/home/presentation/screens/home_shell_screen.dart';
+import '../../features/host_listing/presentation/screens/host_listing_editor_screen.dart';
 import '../../features/listings/presentation/screens/listing_details_screen.dart';
 import '../../features/listings/presentation/screens/search_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/premium/presentation/screens/premium_paywall_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/support_screen.dart';
+import '../../features/profile_verification/presentation/screens/profile_verification_screen.dart';
 import '../../features/reviews/presentation/screens/review_submit_screen.dart';
 import '../../features/role/presentation/screens/role_selector_screen.dart';
 import '../../features/wishlist/presentation/screens/favorites_screen.dart';
@@ -147,6 +150,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.support,
         builder: (context, state) => const SupportScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.hostListingEditor,
+        builder: (context, state) => const HostListingEditorScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.profileVerification,
+        builder: (context, state) => const ProfileVerificationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.notifications,
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
   );
