@@ -119,6 +119,11 @@ void main() {
               const Scaffold(body: Text('Notifications Screen')),
         ),
         GoRoute(
+          path: '/search',
+          builder: (context, state) =>
+              const Scaffold(body: Text('Search Screen')),
+        ),
+        GoRoute(
           path: '/role-selector',
           builder: (context, state) =>
               const Scaffold(body: Text('Role Selector Screen')),
@@ -151,13 +156,20 @@ void main() {
       ),
     );
 
+    var popScope = tester.widget<PopScope<dynamic>>(find.byType(PopScope));
+    expect(popScope.canPop, isTrue);
+
     await tester.tap(find.byTooltip('Sign out'));
     await tester.pump();
+
+    popScope = tester.widget<PopScope<dynamic>>(find.byType(PopScope));
+    expect(popScope.canPop, isFalse);
 
     await tester.tap(find.byTooltip('Sign out'));
     await tester.tap(find.byTooltip('Notifications'));
     await tester.tap(find.byTooltip('Switch role'));
     await tester.tap(find.text('Chat'));
+    await tester.tap(find.text('Search stays'), warnIfMissed: false);
     await tester.pump();
 
     expect(authRepository.signOutCalls, 1);
@@ -165,6 +177,7 @@ void main() {
     expect(find.text('Featured Stays'), findsOneWidget);
     expect(find.text('Open all messages'), findsNothing);
     expect(find.text('Notifications Screen'), findsNothing);
+    expect(find.text('Search Screen'), findsNothing);
     expect(find.text('Role Selector Screen'), findsNothing);
 
     authRepository.completeSignOut();
@@ -192,6 +205,11 @@ void main() {
           builder: (context, state) =>
               const Scaffold(body: Text('Auth Screen')),
         ),
+        GoRoute(
+          path: '/notifications',
+          builder: (context, state) =>
+              const Scaffold(body: Text('Notifications Screen')),
+        ),
       ],
     );
 
@@ -215,10 +233,17 @@ void main() {
     await tester.tap(find.byTooltip('Sign out'));
     await tester.pumpAndSettle();
 
+    final popScope = tester.widget<PopScope<dynamic>>(find.byType(PopScope));
+    expect(popScope.canPop, isTrue);
     expect(find.byTooltip('Sign out'), findsOneWidget);
     expect(find.text('Unable to sign out right now.'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(authRepository.signOutCalls, 1);
+
+    await tester.tap(find.byTooltip('Notifications'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notifications Screen'), findsOneWidget);
   });
 }
 

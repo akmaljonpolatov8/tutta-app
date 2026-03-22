@@ -60,51 +60,57 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     final selectedIndex = _index.clamp(0, tabs.length - 1);
     final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tutta'),
-        actions: [
-          IconButton(
-            tooltip: 'Notifications',
-            onPressed: _isSigningOut
-                ? null
-                : () => context.go(RouteNames.notifications),
-            icon: Badge.count(
-              count: unreadCount,
-              isLabelVisible: unreadCount > 0,
-              child: const Icon(Icons.notifications_none_outlined),
+    return PopScope(
+      canPop: !_isSigningOut,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Tutta'),
+          actions: [
+            IconButton(
+              tooltip: 'Notifications',
+              onPressed: _isSigningOut
+                  ? null
+                  : () => context.go(RouteNames.notifications),
+              icon: Badge.count(
+                count: unreadCount,
+                isLabelVisible: unreadCount > 0,
+                child: const Icon(Icons.notifications_none_outlined),
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Switch role',
-            onPressed: _isSigningOut ? null : _onSwitchRolePressed,
-            icon: const Icon(Icons.swap_horiz),
-          ),
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: _isSigningOut ? null : _onSignOutPressed,
-            icon: _isSigningOut
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: tabs[selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: _isSigningOut
-            ? null
-            : (value) {
-                if (value == _index) {
-                  return;
-                }
-                setState(() => _index = value);
-              },
-        destinations: destinations,
+            IconButton(
+              tooltip: 'Switch role',
+              onPressed: _isSigningOut ? null : _onSwitchRolePressed,
+              icon: const Icon(Icons.swap_horiz),
+            ),
+            IconButton(
+              tooltip: 'Sign out',
+              onPressed: _isSigningOut ? null : _onSignOutPressed,
+              icon: _isSigningOut
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout),
+            ),
+          ],
+        ),
+        body: IgnorePointer(
+          ignoring: _isSigningOut,
+          child: tabs[selectedIndex],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: _isSigningOut
+              ? null
+              : (value) {
+                  if (value == _index) {
+                    return;
+                  }
+                  setState(() => _index = value);
+                },
+          destinations: destinations,
+        ),
       ),
     );
   }
