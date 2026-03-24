@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/runtime_flags.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/network/api_client.dart';
-import '../../auth/application/auth_controller.dart';
-import '../../bookings/application/booking_request_controller.dart';
 import '../data/repositories/api_payments_repository.dart';
 import '../data/repositories/fake_payments_repository.dart';
 import '../domain/models/payment_intent.dart';
@@ -107,8 +105,6 @@ class PaymentController extends StateNotifier<PaymentState> {
           .read(paymentsRepositoryProvider)
           .getPaymentStatus(intent.id);
 
-      await _syncBookingPayment(intent.bookingId, status);
-
       state = state.copyWith(status: status, loading: false, clearError: true);
       return status;
     } on AppException catch (error) {
@@ -125,28 +121,6 @@ class PaymentController extends StateNotifier<PaymentState> {
 
   void clear() {
     state = const PaymentState.initial();
-  }
-
-  Future<void> _syncBookingPayment(
-    String bookingId,
-    PaymentStatus status,
-  ) async {
-    final guestUserId = _read
-        .read(authControllerProvider)
-        .valueOrNull
-        ?.user
-        ?.id;
-    if (guestUserId == null) {
-      return;
-    }
-
-    await _read
-        .read(bookingRepositoryProvider)
-        .setPaymentStatus(
-          bookingId: bookingId,
-          guestUserId: guestUserId,
-          paymentStatus: status,
-        );
   }
 }
 

@@ -23,17 +23,14 @@ class ApiPaymentsRepository implements PaymentsRepository {
     final result = await _apiClient.post(
       ApiEndpoints.paymentsIntents,
       data: <String, dynamic>{
-        'bookingId': bookingId,
-        'amountUzs': amountUzs,
-        'method': method.name,
+        'booking': int.tryParse(bookingId) ?? bookingId,
+        'provider': method.name,
+        'currency': 'UZS',
       },
     );
 
     return result.when(
-      success: (data) {
-        final payload = ApiResponseParser.extractMap(data);
-        return PaymentIntent.fromJson(payload);
-      },
+      success: (data) => _mapPaymentIntent(ApiResponseParser.extractMap(data)),
       failure: _throwFailure,
     );
   }
@@ -56,19 +53,20 @@ class ApiPaymentsRepository implements PaymentsRepository {
 
   @override
   Future<PaymentStatus> processWebhook(PaymentWebhookEvent event) async {
-    final signature = _buildDevSignature(event);
-    final idempotencyKey =
-        '${event.externalTransactionId}-${event.status.name}-${event.method.name}';
+    final webhookSecret = const String.fromEnvironment(
+      'PAYMENT_WEBHOOK_SECRET',
+      defaultValue: '',
+    );
 
     final result = await _apiClient.post(
       ApiEndpoints.paymentWebhook(event.method.name),
       data: <String, dynamic>{
-        'transactionId': event.externalTransactionId,
+        'provider_payment_id': event.externalTransactionId,
         'status': event.status.name,
+        'payload': <String, dynamic>{},
       },
       headers: <String, String>{
-        'x-tutta-signature': signature,
-        'x-idempotency-key': idempotencyKey,
+        if (webhookSecret.isNotEmpty) 'X-Webhook-Secret': webhookSecret,
       },
     );
 
@@ -79,6 +77,29 @@ class ApiPaymentsRepository implements PaymentsRepository {
         return _statusFromServer(rawStatus);
       },
       failure: _throwFailure,
+    );
+  }
+
+  PaymentIntent _mapPaymentIntent(Map<String, dynamic> payload) {
+    final providerRaw = payload['provider']?.toString().toLowerCase().trim();
+    final method = providerRaw == PaymentMethod.payme.name
+        ? PaymentMethod.payme
+        : PaymentMethod.click;
+
+    final amountRaw = payload['amount'];
+    final amount = amountRaw is num
+        ? amountRaw.toInt()
+        : int.tryParse(amountRaw?.toString() ?? '') ?? 0;
+
+    return PaymentIntent(
+      id: payload['id'].toString(),
+      bookingId: payload['booking_id']?.toString() ?? '',
+      amountUzs: amount,
+      method: method,
+      status: _statusFromServer(payload['status']),
+      checkoutUrl: payload['checkout_url']?.toString() ?? '',
+      createdAt: DateTime.tryParse(payload['created_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -101,9 +122,5 @@ class ApiPaymentsRepository implements PaymentsRepository {
       code: failure.code,
       statusCode: failure.statusCode,
     );
-  }
-
-  String _buildDevSignature(PaymentWebhookEvent event) {
-    return 'dev-signature:${event.method.name}:${event.externalTransactionId}:${event.status.name}';
   }
 }

@@ -60,8 +60,24 @@ class ApiClient {
 
     if (payload is Map<String, dynamic>) {
       final serverMessage = payload['message'];
+      final detail = payload['detail'];
+
       if (serverMessage is String && serverMessage.isNotEmpty) {
         message = serverMessage;
+      } else if (detail is String && detail.isNotEmpty) {
+        message = detail;
+      } else {
+        for (final entry in payload.entries) {
+          final value = entry.value;
+          if (value is List && value.isNotEmpty && value.first is String) {
+            message = value.first as String;
+            break;
+          }
+          if (value is String && value.isNotEmpty) {
+            message = value;
+            break;
+          }
+        }
       }
     }
 

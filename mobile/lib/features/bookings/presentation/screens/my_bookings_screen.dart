@@ -178,12 +178,7 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                                       .cancelByGuest(booking.id),
                                 ),
                                 onComplete: () => _runAction(
-                                  () => ref
-                                      .read(
-                                        bookingLifecycleControllerProvider
-                                            .notifier,
-                                      )
-                                      .complete(booking.id),
+                                  () async {},
                                 ),
                                 onProceedToPayment: () => context.push(
                                   '${RouteNames.bookingPayment}/${booking.id}',
@@ -286,15 +281,6 @@ class _BookingTile extends StatelessWidget {
         ];
       }
 
-      if (booking.status == BookingStatus.confirmed) {
-        return [
-          FilledButton(
-            onPressed: loading ? null : onComplete,
-            child: const Text('Mark completed'),
-          ),
-        ];
-      }
-
       return const [];
     }
 
@@ -326,7 +312,7 @@ class _BookingTile extends StatelessWidget {
       return actions;
     }
 
-    if (booking.status == BookingStatus.completed && booking.isReviewAllowed) {
+    if (booking.status == BookingStatus.confirmed && booking.isReviewAllowed) {
       return [
         OutlinedButton(
           onPressed: loading ? null : onLeaveReview,

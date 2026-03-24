@@ -23,17 +23,15 @@ class ApiReviewsRepository implements ReviewsRepository {
     final result = await _apiClient.post(
       ApiEndpoints.reviews,
       data: <String, dynamic>{
-        'bookingId': bookingId,
-        'listingId': listingId,
-        'reviewerUserId': reviewerUserId,
-        'hostUserId': hostUserId,
+        'booking': int.tryParse(bookingId) ?? bookingId,
+        'listing': int.tryParse(listingId) ?? listingId,
         'rating': rating,
         'comment': comment,
       },
     );
 
     return result.when(
-      success: (data) => Review.fromJson(ApiResponseParser.extractMap(data)),
+      success: (data) => _mapReview(ApiResponseParser.extractMap(data)),
       failure: _throwFailure,
     );
   }
@@ -47,8 +45,24 @@ class ApiReviewsRepository implements ReviewsRepository {
     return result.when(
       success: (data) => ApiResponseParser.extractList(
         data,
-      ).map((item) => Review.fromJson(item)).toList(growable: false),
+      ).map(_mapReview).toList(growable: false),
       failure: _throwFailure,
+    );
+  }
+
+  Review _mapReview(Map<String, dynamic> payload) {
+    return Review(
+      id: payload['id'].toString(),
+      bookingId: payload['booking']?.toString() ?? '',
+      listingId: payload['listing']?.toString() ?? '',
+      reviewerUserId: payload['guest_id']?.toString() ?? '',
+      hostUserId: payload['host_id']?.toString() ?? '',
+      rating: payload['rating'] is int
+          ? payload['rating'] as int
+          : int.tryParse(payload['rating']?.toString() ?? '') ?? 0,
+      comment: payload['comment']?.toString() ?? '',
+      createdAt: DateTime.tryParse(payload['created_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
