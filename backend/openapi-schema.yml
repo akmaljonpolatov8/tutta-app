@@ -849,7 +849,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusA35Enum'
+          - $ref: '#/components/schemas/BookingStatusEnum'
           readOnly: true
         created_at:
           type: string
@@ -913,7 +913,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusA35Enum'
+          - $ref: '#/components/schemas/BookingStatusEnum'
           readOnly: true
         created_at:
           type: string
@@ -927,6 +927,16 @@ components:
       - start_date
       - status
       - total_price
+    BookingStatusEnum:
+      enum:
+      - pending
+      - confirmed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `cancelled` - Cancelled
     HealthCheckResponse:
       type: object
       properties:
@@ -1351,7 +1361,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/Status451Enum'
+          - $ref: '#/components/schemas/PaymentStatusEnum'
           readOnly: true
         provider_payment_id:
           type: string
@@ -1394,7 +1404,7 @@ components:
           maxLength: 10
         status:
           allOf:
-          - $ref: '#/components/schemas/Status451Enum'
+          - $ref: '#/components/schemas/PaymentStatusEnum'
           readOnly: true
         amount:
           type: string
@@ -1420,6 +1430,18 @@ components:
       - id
       - provider_payment_id
       - status
+    PaymentStatusEnum:
+      enum:
+      - pending
+      - succeeded
+      - failed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `succeeded` - Succeeded
+        * `failed` - Failed
+        * `cancelled` - Cancelled
     PaymentWebhook:
       type: object
       properties:
@@ -1536,28 +1558,6 @@ components:
       description: |-
         * `guest` - Guest
         * `host` - Host
-    Status451Enum:
-      enum:
-      - pending
-      - succeeded
-      - failed
-      - cancelled
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `succeeded` - Succeeded
-        * `failed` - Failed
-        * `cancelled` - Cancelled
-    StatusA35Enum:
-      enum:
-      - pending
-      - confirmed
-      - cancelled
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `confirmed` - Confirmed
-        * `cancelled` - Cancelled
     Thread:
       type: object
       properties:

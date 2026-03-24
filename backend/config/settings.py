@@ -159,6 +159,19 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API documentation for Tutta rental marketplace backend.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'ENUM_NAME_OVERRIDES': {
+        'BookingStatusEnum': [
+            ('pending', 'Pending'),
+            ('confirmed', 'Confirmed'),
+            ('cancelled', 'Cancelled'),
+        ],
+        'PaymentStatusEnum': [
+            ('pending', 'Pending'),
+            ('succeeded', 'Succeeded'),
+            ('failed', 'Failed'),
+            ('cancelled', 'Cancelled'),
+        ],
+    },
 }
 
 if not DEBUG:
