@@ -5,6 +5,13 @@ from .models import User
 
 
 class AuthApiTests(APITestCase):
+    def test_health_endpoint_is_public(self):
+        response = self.client.get('/api/health')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'ok')
+        self.assertEqual(response.data['database'], 'ok')
+        self.assertIn('timestamp', response.data)
+
     def test_register_login_and_me_flow(self):
         register_payload = {
             'email': 'guest1@example.com',
