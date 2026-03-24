@@ -123,6 +123,12 @@ Keyin PR: `feature/auth-api` -> `feature/backend`.
 
 - Local frontend/mobile integratsiya uchun `.env`da `CORS_ALLOWED_ORIGINS` va `CSRF_TRUSTED_ORIGINS` ni moslang.
 - Productionda `DEBUG=False` va `SECURE_SSL_REDIRECT=True` bo'lishi kerak.
+- Productionda security header envlari ham to'g'ri bo'lishi kerak:
+  - `SECURE_HSTS_SECONDS`
+  - `SECURE_HSTS_INCLUDE_SUBDOMAINS`
+  - `SECURE_HSTS_PRELOAD`
+  - `X_FRAME_OPTIONS`
+  - `REFERRER_POLICY`
 
 ## 5) Docker bilan ishga tushirish
 
