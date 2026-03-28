@@ -20,23 +20,34 @@ class SupportScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
+        children: [
           Card(
             child: ListTile(
-              title: Text('Help center'),
-              subtitle: Text('FAQs for renters and hosts'),
+              title: const Text('Help center'),
+              subtitle: const Text('FAQs for renters and hosts'),
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Help center articles will be connected soon.'),
+                ),
+              ),
             ),
           ),
           Card(
             child: ListTile(
-              title: Text('Contact support'),
-              subtitle: Text('Response within 24 hours'),
+              title: const Text('Contact support'),
+              subtitle: const Text('Response within 24 hours'),
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Support chat is coming soon. Try again later.'),
+                ),
+              ),
             ),
           ),
           Card(
             child: ListTile(
-              title: Text('Report listing'),
-              subtitle: Text('Moderation and safety reports'),
+              title: const Text('Report listing'),
+              subtitle: const Text('Moderation and safety reports'),
+              onTap: () => context.go(RouteNames.notifications),
             ),
           ),
         ],

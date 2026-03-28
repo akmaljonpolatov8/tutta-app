@@ -148,11 +148,38 @@ class ApiBookingRepository implements BookingRepository {
     required String guestUserId,
     required PaymentStatus paymentStatus,
   }) async {
-    final booking = await getById(bookingId);
-    if (booking == null) {
-      throw const AppException('Booking not found.');
-    }
-    return booking;
+    final result = await _apiClient.post(
+      ApiEndpoints.bookingPaymentStatus(bookingId),
+      data: <String, dynamic>{
+        'guestUserId': guestUserId,
+        'paymentStatus': paymentStatus.name,
+      },
+    );
+
+    return result.when(
+      success: (data) {
+        final payload = ApiResponseParser.extractMap(data);
+        if (payload.isNotEmpty) {
+          return _mapBooking(payload);
+        }
+        return Booking(
+          id: bookingId,
+          listingId: '',
+          guestUserId: guestUserId,
+          hostUserId: '',
+          checkInDate: DateTime.now(),
+          checkOutDate: DateTime.now().add(const Duration(days: 1)),
+          status: BookingStatus.confirmed,
+          paymentRequired: true,
+          isPaid: paymentStatus == PaymentStatus.succeeded,
+          paymentStatus: paymentStatus,
+          totalPriceUzs: 0,
+          guestsCount: 1,
+          isReviewAllowed: false,
+        );
+      },
+      failure: _throwFailure,
+    );
   }
 
   Future<Booking> _runAction({

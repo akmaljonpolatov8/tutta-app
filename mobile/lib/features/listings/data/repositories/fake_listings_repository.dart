@@ -29,6 +29,10 @@ class FakeListingsRepository implements ListingsRepository {
       landmark: 'Minor Mosque',
       metro: 'Minor',
       description: 'Modern apartment for short stays only.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1200&q=80',
+      ],
     ),
     Listing(
       id: 'l2',
@@ -48,6 +52,9 @@ class FakeListingsRepository implements ListingsRepository {
         ListingAmenity.hostLivesTogether,
       ],
       description: 'Safe and quiet room in family home.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+      ],
     ),
     Listing(
       id: 'l3',
@@ -63,6 +70,9 @@ class FakeListingsRepository implements ListingsRepository {
       isActive: true,
       amenities: [ListingAmenity.hostLivesTogether, ListingAmenity.kitchen],
       description: 'Practice English and Uzbek through cultural exchange.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80',
+      ],
     ),
   ];
   static final Map<String, Map<DateTime, AvailabilityDay>> _availabilityByListing =

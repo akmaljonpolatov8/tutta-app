@@ -67,6 +67,20 @@ class ApiEndpoints {
   static String paymentWebhook(String methodName) =>
       '/payments/webhooks/$methodName';
 
+  // Notifications
+  static const notifications = '/notifications';
+
+  static String notificationById(String id) => '$notifications/$id';
+
+  static String notificationMarkRead(String id) => '${notificationById(id)}/read';
+
+  static String notificationsMarkAllRead() => '$notifications/read-all';
+
+  static String notificationsDeviceRegister() => '$notifications/devices/register';
+
+  static String notificationsDeviceUnregister() =>
+      '$notifications/devices/unregister';
+
   static const reviews = '/reviews';
 
   static String reviewsByListing(String listingId) =>

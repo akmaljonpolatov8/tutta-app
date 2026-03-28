@@ -149,7 +149,13 @@ class _HostRequestsScreenState extends ConsumerState<HostRequestsScreen> {
                                   )
                                   .reject(booking.id),
                             ),
-                            onComplete: () => _run(() async {}),
+                            onComplete: () => _run(
+                              () => ref
+                                  .read(
+                                    bookingLifecycleControllerProvider.notifier,
+                                  )
+                                  .complete(booking.id),
+                            ),
                           );
                         },
                         separatorBuilder: (_, index) =>
@@ -233,6 +239,15 @@ class _HostRequestTile extends StatelessWidget {
         OutlinedButton(
           onPressed: loading ? null : onReject,
           child: const Text('Reject'),
+        ),
+      ];
+    }
+
+    if (booking.status == BookingStatus.confirmed) {
+      return [
+        FilledButton(
+          onPressed: loading ? null : onComplete,
+          child: const Text('Mark as completed'),
         ),
       ];
     }

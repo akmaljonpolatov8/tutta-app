@@ -365,7 +365,7 @@ class _DetailsStep extends StatelessWidget {
           children: [
             Expanded(
               child: DropdownButtonFormField<int>(
-                value: maxGuests,
+                initialValue: maxGuests,
                 decoration: const InputDecoration(labelText: 'Max guests'),
                 items: List.generate(
                   10,
@@ -381,7 +381,7 @@ class _DetailsStep extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: DropdownButtonFormField<int>(
-                value: minDays,
+                initialValue: minDays,
                 decoration: const InputDecoration(labelText: 'Min days'),
                 items: List.generate(
                   30,
@@ -397,7 +397,7 @@ class _DetailsStep extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: DropdownButtonFormField<int>(
-                value: maxDays,
+                initialValue: maxDays,
                 decoration: const InputDecoration(labelText: 'Max days'),
                 items: List.generate(
                   30,

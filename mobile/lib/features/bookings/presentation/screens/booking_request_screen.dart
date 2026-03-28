@@ -167,8 +167,7 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
       }
 
       _show('Booking request sent to host.');
-      context.pop();
-      context.pop();
+      context.go(RouteNames.bookings);
     } on AppException catch (error) {
       _show(error.message);
     } catch (_) {
@@ -365,7 +364,11 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                     ),
                     const Spacer(),
                     TextButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        _show(
+                          'Total includes nightly price, service fee, and occupancy taxes.',
+                        );
+                      },
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF0D2D82),
                       ),

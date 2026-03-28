@@ -9,6 +9,7 @@ import 'package:tutta/features/listings/data/repositories/api_listings_repositor
 import 'package:tutta/features/listings/domain/models/availability_day.dart';
 import 'package:tutta/features/listings/domain/models/create_listing_input.dart';
 import 'package:tutta/features/listings/domain/models/listing.dart';
+import 'package:tutta/features/notifications/data/repositories/api_notifications_repository.dart';
 import 'package:tutta/features/payments/data/repositories/api_payments_repository.dart';
 import 'package:tutta/features/payments/domain/models/payment_method.dart';
 import 'package:tutta/features/payments/domain/models/payment_status.dart';
@@ -69,7 +70,7 @@ void main() {
       final bookings = await repository.getGuestBookings('guest-1');
 
       final call = client.getCalls.single;
-      expect(call.path, ApiEndpoints.guestBookings('guest-1'));
+      expect(call.path, ApiEndpoints.bookingsByRole('guest'));
       expect(bookings, hasLength(1));
       expect(bookings.first.id, 'b-1');
       expect(bookings.first.isPaid, isFalse);
@@ -271,24 +272,78 @@ void main() {
       expect(result, hasLength(1));
       expect(result.first.isAvailable, isFalse);
     });
+
+    test('notifications list and mark read use expected endpoints', () async {
+      final client = _RecordingApiClient();
+      final repository = ApiNotificationsRepository(client);
+
+      client.queueGet(
+        ApiSuccess(<String, dynamic>{
+          'results': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 91,
+              'type': 'system',
+              'title': 'Welcome',
+              'body': 'Hello',
+              'is_read': false,
+              'created_at': '2026-03-28T10:00:00.000Z',
+              'payload': <String, dynamic>{},
+            },
+          ],
+        }),
+      );
+      client.queuePost(
+        ApiSuccess(<String, dynamic>{
+          'detail': 'Notification marked as read.',
+        }),
+      );
+      client.queuePost(
+        ApiSuccess(<String, dynamic>{
+          'detail': 'Push device registered.',
+        }),
+      );
+      client.queuePost(
+        ApiSuccess(<String, dynamic>{
+          'detail': 'Push device unregistered.',
+          'updated': 1,
+        }),
+      );
+
+      final items = await repository.list();
+      await repository.markRead('91');
+      await repository.registerDeviceToken(
+        token: 'fcm_token_123',
+        platform: 'android',
+        deviceId: 'device-1',
+      );
+      await repository.unregisterDeviceToken('fcm_token_123');
+
+      expect(client.getCalls.last.path, ApiEndpoints.notifications);
+      expect(client.postCalls[0].path, ApiEndpoints.notificationMarkRead('91'));
+      expect(client.postCalls[1].path, ApiEndpoints.notificationsDeviceRegister());
+      expect(client.postCalls[2].path, ApiEndpoints.notificationsDeviceUnregister());
+      expect(items, hasLength(1));
+      expect(items.first.id, '91');
+      expect(items.first.isRead, isFalse);
+    });
   });
 }
 
 Map<String, dynamic> _bookingJson({required String id, bool isPaid = false}) {
   return <String, dynamic>{
     'id': id,
-    'listingId': 'listing-1',
-    'guestUserId': 'guest-1',
-    'hostUserId': 'host-1',
-    'checkInDate': '2026-03-20T14:00:00.000Z',
-    'checkOutDate': '2026-03-22T11:00:00.000Z',
+    'listing': 'listing-1',
+    'guest_id': 'guest-1',
+    'host_id': 'host-1',
+    'start_date': '2026-03-20',
+    'end_date': '2026-03-22',
     'status': 'confirmed',
-    'paymentRequired': true,
-    'isPaid': isPaid,
-    'paymentStatus': isPaid ? 'succeeded' : 'pending',
-    'totalPriceUzs': 300000,
-    'guestsCount': 2,
-    'isReviewAllowed': false,
+    'payment_required': true,
+    'is_paid': isPaid,
+    'payment_status': isPaid ? 'succeeded' : 'pending',
+    'total_price': 300000,
+    'guests_count': 2,
+    'is_review_allowed': false,
   };
 }
 

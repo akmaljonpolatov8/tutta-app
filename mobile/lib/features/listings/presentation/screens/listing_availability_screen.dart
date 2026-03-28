@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/route_names.dart';
 import '../../application/search_controller.dart';
 import '../../domain/models/availability_day.dart';
 
@@ -58,7 +60,15 @@ class _ListingAvailabilityScreenState
     final entries = _days.entries.toList(growable: false)
       ..sort((a, b) => a.key.compareTo(b.key));
     return Scaffold(
-      appBar: AppBar(title: const Text('Availability calendar')),
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.home),
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: const Text('Availability calendar'),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(

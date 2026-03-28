@@ -4,6 +4,12 @@ import '../models/message.dart';
 abstract interface class ChatRepository {
   Future<List<ChatThread>> getThreads();
 
+  Future<ChatThread> createOrGetThread({
+    required String listingId,
+    required String guestUserId,
+    required String hostUserId,
+  });
+
   Future<List<Message>> getMessages(String threadId);
 
   Future<Message> sendMessage({

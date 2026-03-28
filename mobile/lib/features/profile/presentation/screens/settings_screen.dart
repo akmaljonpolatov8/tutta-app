@@ -19,21 +19,28 @@ class SettingsScreen extends StatelessWidget {
         title: const Text('Settings'),
       ),
       body: ListView(
-        children: const [
+        children: [
           ListTile(
-            leading: Icon(Icons.language_outlined),
-            title: Text('Language'),
-            subtitle: Text('Uzbek / Russian / English'),
+            leading: const Icon(Icons.language_outlined),
+            title: const Text('Language'),
+            subtitle: const Text('Uzbek / Russian / English'),
+            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Language selector will be connected next.'),
+              ),
+            ),
           ),
           ListTile(
-            leading: Icon(Icons.notifications_outlined),
-            title: Text('Notifications'),
-            subtitle: Text('Push and in-app preferences'),
+            leading: const Icon(Icons.notifications_outlined),
+            title: const Text('Notifications'),
+            subtitle: const Text('Push and in-app preferences'),
+            onTap: () => context.push(RouteNames.notifications),
           ),
           ListTile(
-            leading: Icon(Icons.privacy_tip_outlined),
-            title: Text('Privacy'),
-            subtitle: Text('Data and visibility settings'),
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy'),
+            subtitle: const Text('Data and visibility settings'),
+            onTap: () => context.go(RouteNames.support),
           ),
         ],
       ),

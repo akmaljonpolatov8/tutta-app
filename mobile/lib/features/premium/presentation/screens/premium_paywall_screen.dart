@@ -43,7 +43,15 @@ class PremiumPaywallScreen extends StatelessWidget {
             ),
             const Spacer(),
             FilledButton(
-              onPressed: () {},
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Premium payment gateway is being connected. Use Click/Payme soon.',
+                    ),
+                  ),
+                );
+              },
               child: const Text('Continue to payment'),
             ),
           ],

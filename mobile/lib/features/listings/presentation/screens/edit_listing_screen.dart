@@ -113,7 +113,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
               DropdownButtonFormField<ListingType>(
-                value: _listingType,
+                initialValue: _listingType,
                 decoration: const InputDecoration(labelText: 'Listing type'),
                 items: const [
                   DropdownMenuItem(value: ListingType.apartment, child: Text('Apartment')),
@@ -158,7 +158,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<int>(
-                      value: _maxGuests,
+                      initialValue: _maxGuests,
                       decoration: const InputDecoration(labelText: 'Max guests'),
                       items: List.generate(
                         10,
@@ -176,7 +176,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: DropdownButtonFormField<int>(
-                      value: _minDays,
+                      initialValue: _minDays,
                       decoration: const InputDecoration(labelText: 'Min days'),
                       items: List.generate(
                         30,
@@ -194,7 +194,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: DropdownButtonFormField<int>(
-                      value: _maxDays,
+                      initialValue: _maxDays,
                       decoration: const InputDecoration(labelText: 'Max days'),
                       items: List.generate(
                         30,
@@ -261,7 +261,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: FilledButton(
-              onPressed: isSubmitting ? null : () => _save(context),
+              onPressed: isSubmitting ? null : _save,
               child: Text(isSubmitting ? 'Saving...' : 'Save changes'),
             ),
           ),
@@ -270,7 +270,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
     );
   }
 
-  Future<void> _save(BuildContext context) async {
+  Future<void> _save() async {
     if (_titleController.text.trim().isEmpty ||
         _descriptionController.text.trim().isEmpty ||
         _cityController.text.trim().isEmpty ||

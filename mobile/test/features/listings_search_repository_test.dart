@@ -6,7 +6,7 @@ import 'package:tutta/features/listings/domain/models/listing_search_params.dart
 
 void main() {
   group('FakeListingsRepository search', () {
-    const repository = FakeListingsRepository();
+    final repository = FakeListingsRepository();
 
     test('returns tashkent listings by city token search', () async {
       final items = await repository.search(

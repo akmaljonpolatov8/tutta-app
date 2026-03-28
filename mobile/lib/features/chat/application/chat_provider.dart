@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/runtime_flags.dart';
 import '../../../core/network/api_client.dart';
+import '../../auth/application/auth_controller.dart';
 import '../data/repositories/api_chat_repository.dart';
 import '../data/repositories/fake_chat_repository.dart';
 import '../domain/models/chat_thread.dart';
@@ -30,6 +31,27 @@ class ChatActions {
   const ChatActions(this._ref);
 
   final Ref _ref;
+
+  Future<ChatThread> createOrGetThread({
+    required String listingId,
+    required String hostUserId,
+  }) async {
+    final currentUserId =
+        _ref.read(authControllerProvider).valueOrNull?.user?.id;
+    if (currentUserId == null || currentUserId.isEmpty) {
+      throw StateError('Authenticated user is required to open chat.');
+    }
+
+    final thread = await _ref.read(chatRepositoryProvider).createOrGetThread(
+          listingId: listingId,
+          guestUserId: currentUserId,
+          hostUserId: hostUserId,
+        );
+
+    _ref.invalidate(chatThreadsProvider);
+    _ref.invalidate(chatMessagesProvider(thread.id));
+    return thread;
+  }
 
   Future<void> sendMessage({
     required String threadId,

@@ -191,7 +191,7 @@ class ApiListingsRepository implements ListingsRepository {
     final images = (payload['images'] is List)
         ? (payload['images'] as List)
               .whereType<Map<String, dynamic>>()
-              .map((item) => item['image']?.toString() ?? '')
+              .map((item) => _normalizeImageUrl(item['image']?.toString() ?? ''))
               .where((url) => url.isNotEmpty)
               .toList(growable: false)
         : const <String>[];
@@ -214,6 +214,25 @@ class ApiListingsRepository implements ListingsRepository {
       landmark: payload['landmark']?.toString(),
       metro: payload['metro']?.toString(),
     );
+  }
+
+  String _normalizeImageUrl(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return '';
+    }
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+
+    final base = _apiClient.baseUrl;
+    final apiIndex = base.indexOf('/api');
+    final origin = apiIndex > 0 ? base.substring(0, apiIndex) : base;
+
+    if (value.startsWith('/')) {
+      return '$origin$value';
+    }
+    return '$origin/$value';
   }
 
   ListingType _mapTypeFromApi(String? value) {

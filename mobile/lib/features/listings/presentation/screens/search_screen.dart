@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/route_names.dart';
 import '../../application/search_controller.dart';
 import '../../domain/models/listing.dart';
+import '../../../wishlist/application/favorites_controller.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -16,6 +19,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   late final TextEditingController _cityController;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -30,6 +34,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _cityController.dispose();
     super.dispose();
   }
@@ -52,7 +57,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.menu, color: Color(0xFF072A73)),
+                        IconButton(
+                          onPressed: () => context.go(RouteNames.home),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Color(0xFF072A73),
+                          ),
+                        ),
                         const SizedBox(width: 14),
                         const Text(
                           'Tutta',
@@ -63,13 +74,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           ),
                         ),
                         const Spacer(),
-                        const CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Color(0xFFF3CDAD),
-                          child: Icon(
-                            Icons.person,
-                            size: 16,
-                            color: Color(0xFFB78664),
+                        IconButton(
+                          onPressed: () => context.go(RouteNames.settings),
+                          icon: const CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Color(0xFFF3CDAD),
+                            child: Icon(
+                              Icons.person,
+                              size: 16,
+                              color: Color(0xFFB78664),
+                            ),
                           ),
                         ),
                       ],
@@ -93,9 +107,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           hintStyle: TextStyle(color: Color(0xFF707788)),
                           contentPadding: EdgeInsets.symmetric(vertical: 14),
                         ),
-                        onChanged: ref
-                            .read(searchControllerProvider.notifier)
-                            .setCity,
+                        onChanged: _onCityChanged,
                         onSubmitted: (_) => ref
                             .read(searchControllerProvider.notifier)
                             .search(),
@@ -135,10 +147,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                     ),
                                   ),
                                 ),
-                                const Expanded(
-                                  child: SizedBox(
-                                    height: 32,
-                                    child: Center(child: Text('Map')),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => context.push(RouteNames.searchMap),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: const SizedBox(
+                                      height: 32,
+                                      child: Center(child: Text('Map')),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -257,11 +273,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final listing = state.items[index];
+                    final isFavorite = ref.watch(
+                      favoritesIdsProvider.select(
+                        (ids) => ids.contains(listing.id),
+                      ),
+                    );
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 14),
                       child:
                           _SearchListingTile(
                                 listing: listing,
+                                isFavorite: isFavorite,
+                                onToggleFavorite: () => ref
+                                    .read(favoritesIdsProvider.notifier)
+                                    .toggle(listing.id),
                                 onTap: () => context.push(
                                   '${RouteNames.listingDetails}/${listing.id}',
                                 ),
@@ -279,7 +304,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(14, 6, 14, 12),
         child: FilledButton.icon(
-          onPressed: () {},
+          onPressed: () => context.push(RouteNames.searchMap),
           icon: const Icon(Icons.map_outlined),
           label: const Text('Show Map'),
           style: FilledButton.styleFrom(
@@ -451,6 +476,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
     districtController.dispose();
   }
+
+  void _onCityChanged(String value) {
+    final controller = ref.read(searchControllerProvider.notifier);
+    controller.setCity(value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 450), () {
+      if (!mounted) {
+        return;
+      }
+      controller.search();
+    });
+  }
 }
 
 const List<ListingAmenity> _supportedAmenities = <ListingAmenity>[
@@ -462,6 +499,8 @@ const List<ListingAmenity> _supportedAmenities = <ListingAmenity>[
   ListingAmenity.privateBathroom,
   ListingAmenity.kidsAllowed,
   ListingAmenity.petsAllowed,
+  ListingAmenity.womenOnly,
+  ListingAmenity.menOnly,
   ListingAmenity.hostLivesTogether,
   ListingAmenity.instantConfirm,
 ];
@@ -544,10 +583,17 @@ class _FilterPill extends StatelessWidget {
 }
 
 class _SearchListingTile extends StatelessWidget {
-  const _SearchListingTile({required this.listing, required this.onTap});
+  const _SearchListingTile({
+    required this.listing,
+    required this.onTap,
+    required this.isFavorite,
+    required this.onToggleFavorite,
+  });
 
   final Listing listing;
   final VoidCallback onTap;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -574,17 +620,23 @@ class _SearchListingTile extends StatelessWidget {
                 Positioned(
                   right: 12,
                   top: 12,
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(
-                      color: Color(0xF7FFFFFF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite,
-                      color: Color(0xFF072A73),
-                      size: 20,
+                  child: InkWell(
+                    onTap: onToggleFavorite,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        color: Color(0xF7FFFFFF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite
+                            ? const Color(0xFFD64545)
+                            : const Color(0xFF072A73),
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),

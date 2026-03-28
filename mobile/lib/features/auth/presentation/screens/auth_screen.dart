@@ -98,12 +98,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
 
-    final parts = fullName.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    final parts = fullName
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList();
     final firstName = parts.isEmpty ? 'User' : parts.first;
     final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : 'Member';
 
     _setInlineError(null);
-    await ref.read(authControllerProvider.notifier).registerAndLogin(
+    await ref
+        .read(authControllerProvider.notifier)
+        .registerAndLogin(
           email: email,
           password: password,
           firstName: firstName,
@@ -196,7 +201,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               if (!_isSignUp)
                 Row(
                   children: [
-                    const Icon(Icons.menu, color: Color(0xFF072A73)),
+                    IconButton(
+                      onPressed: () => context.go(RouteNames.onboarding),
+                      icon: const Icon(Icons.menu, color: Color(0xFF072A73)),
+                    ),
                     const Spacer(),
                     const Text(
                       'Tutta',
@@ -207,13 +215,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                     const Spacer(),
-                    const CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Color(0xFFF3CDAD),
-                      child: Icon(
-                        Icons.person,
-                        size: 18,
-                        color: Color(0xFFB78664),
+                    IconButton(
+                      onPressed: () => context.go(RouteNames.support),
+                      icon: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Color(0xFFF3CDAD),
+                        child: Icon(
+                          Icons.person,
+                          size: 18,
+                          color: Color(0xFFB78664),
+                        ),
                       ),
                     ),
                   ],
@@ -280,7 +291,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   child: Text.rich(
                     TextSpan(
                       text: 'Already a member? ',
-                      style: const TextStyle(color: Color(0xFF3D4350), fontSize: 17),
+                      style: const TextStyle(
+                        color: Color(0xFF3D4350),
+                        fontSize: 17,
+                      ),
                       children: [
                         WidgetSpan(
                           alignment: PlaceholderAlignment.middle,
@@ -306,7 +320,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: const Color(0xFFFDEBEC),
@@ -331,7 +348,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     child: _SocialButton(
                       label: 'Apple',
                       icon: Icons.apple,
-                      onTap: () => _showSnack('Apple sign-in is not connected yet.'),
+                      onTap: () =>
+                          _showSnack('Apple sign-in is not connected yet.'),
                     ),
                   ),
                 ],
@@ -352,7 +370,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               _LightField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                hintText: _isSignUp ? 'john@example.com' : 'concierge@tutta.com',
+                hintText: _isSignUp
+                    ? 'john@example.com'
+                    : 'concierge@tutta.com',
                 suffixIcon: Icons.email,
               ),
               const SizedBox(height: 10),
@@ -371,12 +391,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   const _FieldLabel(text: 'PASSWORD'),
                   const Spacer(),
                   if (!_isSignUp)
-                    const Text(
-                      'FORGOT PASSWORD?',
-                      style: TextStyle(
-                        color: Color(0xFF6A480A),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.1,
+                    TextButton(
+                      onPressed: () => context.go(RouteNames.support),
+                      child: const Text(
+                        'FORGOT PASSWORD?',
+                        style: TextStyle(
+                          color: Color(0xFF6A480A),
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.1,
+                        ),
                       ),
                     ),
                 ],
@@ -385,8 +408,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 hintText: '••••••••',
-                suffixIcon: _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                suffixIcon: _obscurePassword
+                    ? Icons.visibility
+                    : Icons.visibility_off,
+                onSuffixTap: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
               if (_isSignUp) ...[
                 const SizedBox(height: 14),
@@ -490,10 +516,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               await _sendOtp(value: value);
                             }
                           },
-                    icon: const Icon(Icons.smartphone, color: Color(0xFF576680)),
+                    icon: const Icon(
+                      Icons.smartphone,
+                      color: Color(0xFF576680),
+                    ),
                     label: const Text(
                       'Continue with Phone Number',
-                      style: TextStyle(color: Color(0xFF576680), fontSize: 22 / 1.2),
+                      style: TextStyle(
+                        color: Color(0xFF576680),
+                        fontSize: 22 / 1.2,
+                      ),
                     ),
                   ),
                 ),
@@ -507,7 +539,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   child: Text.rich(
                     TextSpan(
                       text: 'New to Tutta? ',
-                      style: const TextStyle(color: Color(0xFF3D4350), fontSize: 17),
+                      style: const TextStyle(
+                        color: Color(0xFF3D4350),
+                        fontSize: 17,
+                      ),
                       children: [
                         WidgetSpan(
                           alignment: PlaceholderAlignment.middle,
@@ -532,7 +567,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   child: Padding(
                     padding: EdgeInsets.only(top: 10),
                     child: Text(
-                      '© 2024 TUTTA HOSPITALITY GROUP. ALL RIGHTS RESERVED.',
+                      '© 2026 TUTTA HOSPITALITY GROUP. ALL RIGHTS RESERVED.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF6F7483),
@@ -568,7 +603,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
               child: const Text('Continue'),
             ),
           ],
@@ -634,9 +670,15 @@ class _LightField extends StatelessWidget {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: Color(0xFFA8AEB8), fontSize: 22 / 1.2),
+          hintStyle: const TextStyle(
+            color: Color(0xFFA8AEB8),
+            fontSize: 22 / 1.2,
+          ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           suffixIcon: suffixIcon == null
               ? null
               : IconButton(
@@ -678,11 +720,7 @@ class _DividerText extends StatelessWidget {
 }
 
 class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.onTap,
-    this.icon,
-  });
+  const _SocialButton({required this.label, required this.onTap, this.icon});
 
   final String label;
   final VoidCallback? onTap;

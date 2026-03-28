@@ -30,4 +30,9 @@ class RuntimeFlags {
     'USE_FAKE_LISTINGS',
     defaultValue: true,
   );
+
+  static const bool useFakeNotifications = bool.fromEnvironment(
+    'USE_FAKE_NOTIFICATIONS',
+    defaultValue: true,
+  );
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +7,9 @@ import '../../../../app/router/route_names.dart';
 import '../../../../core/enums/app_role.dart';
 import '../../../../core/widgets/empty_state_view.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../listings/application/search_controller.dart';
+import '../../../listings/domain/models/listing.dart';
+import '../../../wishlist/application/favorites_controller.dart';
 import '../../application/app_session_controller.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
@@ -96,14 +99,20 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
           title: 'Requests',
           subtitle: 'Approve or decline booking requests in one place.',
         ),
-        _HomeTab(title: 'Chat', subtitle: 'Talk to your guests in real time.'),
-        _HomeTab(title: 'Profile', subtitle: 'Host profile and settings.'),
+        _ChatEntryTab(
+          title: 'Chat',
+          subtitle: 'Talk to your guests in real time.',
+        ),
+        _ProfileEntryTab(
+          title: 'Profile',
+          subtitle: 'Host profile and settings.',
+        ),
       ];
     }
 
     return const [
       _RenterHomeTab(),
-      _HomeTab(
+      _FavoritesEntryTab(
         title: 'Favorites',
         subtitle: 'Saved listings and host profiles.',
       ),
@@ -111,8 +120,11 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
         title: 'Bookings',
         subtitle: 'Track requests and upcoming stays in Uzbekistan.',
       ),
-      _HomeTab(title: 'Chat', subtitle: 'Talk to hosts before booking.'),
-      _HomeTab(
+      _ChatEntryTab(
+        title: 'Chat',
+        subtitle: 'Talk to hosts before booking.',
+      ),
+      _ProfileEntryTab(
         title: 'Profile',
         subtitle: 'Account, premium, and preferences.',
       ),
@@ -164,20 +176,23 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 }
 
-class _RenterHomeTab extends StatelessWidget {
+class _RenterHomeTab extends ConsumerWidget {
   const _RenterHomeTab();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 22),
         children: [
           Row(
-            children: const [
-              Icon(Icons.menu, color: Color(0xFF072A73)),
-              SizedBox(width: 12),
-              Text(
+            children: [
+              IconButton(
+                onPressed: () => context.go(RouteNames.roleSelector),
+                icon: const Icon(Icons.menu, color: Color(0xFF072A73)),
+              ),
+              const SizedBox(width: 6),
+              const Text(
                 'Tutta',
                 style: TextStyle(
                   color: Color(0xFF072A73),
@@ -185,71 +200,106 @@ class _RenterHomeTab extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Spacer(),
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFF3CDAD),
-                child: Icon(Icons.person, size: 16, color: Color(0xFFB78664)),
+              const Spacer(),
+              IconButton(
+                onPressed: () => context.go(RouteNames.settings),
+                icon: const CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Color(0xFFF3CDAD),
+                  child: Icon(Icons.person, size: 16, color: Color(0xFFB78664)),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          Container(
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE9EAEE),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: const Row(
-              children: [
-                Icon(Icons.search, color: Color(0xFF6E7585)),
-                SizedBox(width: 10),
-                Text(
-                  'Where to?',
-                  style: TextStyle(
-                    color: Color(0xFF6E7585),
-                    fontSize: 18 / 1.2,
+          InkWell(
+            onTap: () => context.go(RouteNames.search),
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE9EAEE),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: const Row(
+                children: [
+                  Icon(Icons.search, color: Color(0xFF6E7585)),
+                  SizedBox(width: 10),
+                  Text(
+                    'Where to?',
+                    style: TextStyle(
+                      color: Color(0xFF6E7585),
+                      fontSize: 18 / 1.2,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
           Row(
-            children: const [
+            children: [
               Expanded(
-                child: _HomePill(icon: Icons.place_outlined, label: 'Anywhere'),
+                child: _HomePill(
+                  icon: Icons.place_outlined,
+                  label: 'Anywhere',
+                  onTap: () => context.go(RouteNames.search),
+                ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: _HomePill(
                   icon: Icons.calendar_month_outlined,
                   label: 'Any week',
+                  onTap: () => context.go(RouteNames.search),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Row(
+          Row(
             children: [
               _SegmentTile(
                 label: 'HOMES',
                 icon: Icons.home,
                 active: true,
                 width: 112,
+                onTap: () {
+                  final search = ref.read(searchControllerProvider.notifier);
+                  search.setTypes(
+                    const <ListingType>[
+                      ListingType.apartment,
+                      ListingType.homePart,
+                    ],
+                  );
+                  search.search();
+                  context.go(RouteNames.search);
+                },
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               _SegmentTile(
                 label: 'ROOMS',
                 icon: Icons.bed_outlined,
                 width: 112,
+                onTap: () {
+                  final search = ref.read(searchControllerProvider.notifier);
+                  search.setTypes(const <ListingType>[ListingType.room]);
+                  search.search();
+                  context.go(RouteNames.search);
+                },
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               _SegmentTile(
                 label: 'SKILL\nEXCHANGE',
                 icon: Icons.swap_horiz,
                 width: 120,
+                onTap: () {
+                  final search = ref.read(searchControllerProvider.notifier);
+                  search.setIncludeFreeStay(true);
+                  search.search();
+                  context.go(RouteNames.search);
+                },
               ),
             ],
           ),
@@ -265,8 +315,8 @@ class _RenterHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Row(
-            children: const [
-              Text(
+            children: [
+              const Text(
                 'Featured Stays',
                 style: TextStyle(
                   color: Color(0xFF072A73),
@@ -274,20 +324,27 @@ class _RenterHomeTab extends StatelessWidget {
                   fontSize: 44 / 2,
                 ),
               ),
-              Spacer(),
-              Text(
-                'View all',
-                style: TextStyle(
-                  color: Color(0xFF072A73),
-                  fontWeight: FontWeight.w600,
+              const Spacer(),
+              InkWell(
+                onTap: () => context.go(RouteNames.search),
+                child: const Row(
+                  children: [
+                    Text(
+                      'View all',
+                      style: TextStyle(
+                        color: Color(0xFF072A73),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward, size: 16, color: Color(0xFF072A73)),
+                  ],
                 ),
               ),
-              SizedBox(width: 4),
-              Icon(Icons.arrow_forward, size: 16, color: Color(0xFF072A73)),
             ],
           ),
           const SizedBox(height: 12),
-          const _FeaturedStayCard(),
+          const _FeaturedStayCard(listingId: 'l1'),
           const SizedBox(height: 18),
           const Text(
             'Nearby Gems',
@@ -299,6 +356,7 @@ class _RenterHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const _NearbyCard(
+            listingId: 'l3',
             title: 'Samarkand Courtyard Flat',
             subtitle: 'Samarkand • 3 nights',
             price: '850 000 UZS / night',
@@ -308,6 +366,7 @@ class _RenterHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const _NearbyCard(
+            listingId: 'l2',
             title: 'Bukhara Old City Studio',
             subtitle: 'Bukhara • 2 nights',
             price: '620 000 UZS / night',
@@ -317,6 +376,7 @@ class _RenterHomeTab extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const _NearbyCard(
+            listingId: 'l1',
             title: 'Cozy Living Room Stay',
             subtitle: 'Tashkent • 2 nights',
             price: '740 000 UZS / night',
@@ -331,32 +391,37 @@ class _RenterHomeTab extends StatelessWidget {
 }
 
 class _HomePill extends StatelessWidget {
-  const _HomePill({required this.icon, required this.label});
+  const _HomePill({required this.icon, required this.label, this.onTap});
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 46,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF0F3),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: const Color(0xFF3E4658)),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 18 / 1.2,
-              fontWeight: FontWeight.w600,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF0F3),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: const Color(0xFF3E4658)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18 / 1.2,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -368,144 +433,167 @@ class _SegmentTile extends StatelessWidget {
     required this.icon,
     required this.width,
     this.active = false,
+    this.onTap,
   });
 
   final String label;
   final IconData icon;
   final double width;
   final bool active;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: 90,
-      decoration: BoxDecoration(
-        color: active ? const Color(0xFF072A73) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: active
-            ? const [
-                BoxShadow(
-                  color: Color(0x22000000),
-                  blurRadius: 14,
-                  offset: Offset(0, 8),
-                ),
-              ]
-            : const [],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: active ? Colors.white : const Color(0xFF2F374A)),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: active ? Colors.white : const Color(0xFF2F374A),
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-              fontSize: 12,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: width,
+        height: 90,
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF072A73) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: active
+              ? const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 14,
+                    offset: Offset(0, 8),
+                  ),
+                ]
+              : const [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: active ? Colors.white : const Color(0xFF2F374A)),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: active ? Colors.white : const Color(0xFF2F374A),
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _FeaturedStayCard extends StatelessWidget {
-  const _FeaturedStayCard();
+class _FeaturedStayCard extends ConsumerWidget {
+  const _FeaturedStayCard({required this.listingId});
+
+  final String listingId;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              SizedBox(
-                height: 320,
-                width: double.infinity,
-                child: Image.asset(
-                  'assets/images/home1.png',
-                  fit: BoxFit.cover,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavorite = ref.watch(
+      favoritesIdsProvider.select((ids) => ids.contains(listingId)),
+    );
+    return InkWell(
+      onTap: () => context.push('${RouteNames.listingDetails}/$listingId'),
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                SizedBox(
+                  height: 320,
+                  width: double.infinity,
+                  child: Image.asset(
+                    'assets/images/home1.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              Positioned(
-                left: 12,
-                bottom: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 7,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF072A73),
-                    borderRadius: BorderRadius.all(Radius.circular(999)),
-                  ),
-                  child: const Text(
-                    '1 350 000 UZS / night',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 7,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF072A73),
+                      borderRadius: BorderRadius.all(Radius.circular(999)),
+                    ),
+                    child: const Text(
+                      '1 350 000 UZS / night',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const Positioned(
-                right: 12,
-                top: 12,
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Color(0x88FFFFFF),
-                  child: Icon(Icons.favorite_border, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Row(
-              children: const [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Amirsoy Mountain Chalet',
-                        style: TextStyle(
-                          color: Color(0xFF071E57),
-                          fontSize: 34 / 2,
-                          fontWeight: FontWeight.w700,
-                        ),
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: InkWell(
+                    onTap: () =>
+                        ref.read(favoritesIdsProvider.notifier).toggle(listingId),
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: const Color(0x88FFFFFF),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.white,
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Tashkent Region, Uzbekistan',
-                        style: TextStyle(color: Color(0xFF4E5568)),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-                _RatingBadge(value: '4.92'),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Row(
+                children: const [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Amirsoy Mountain Chalet',
+                          style: TextStyle(
+                            color: Color(0xFF071E57),
+                            fontSize: 34 / 2,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Tashkent Region, Uzbekistan',
+                          style: TextStyle(color: Color(0xFF4E5568)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _RatingBadge(value: '4.92'),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _NearbyCard extends StatelessWidget {
+class _NearbyCard extends ConsumerWidget {
   const _NearbyCard({
+    required this.listingId,
     required this.title,
     required this.subtitle,
     required this.price,
@@ -514,6 +602,7 @@ class _NearbyCard extends StatelessWidget {
     this.imageAssetPath,
   });
 
+  final String listingId;
   final String title;
   final String subtitle;
   final String price;
@@ -522,75 +611,91 @@ class _NearbyCard extends StatelessWidget {
   final String? imageAssetPath;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: SizedBox(
-              width: 108,
-              height: 98,
-              child: imageAssetPath == null
-                  ? Container(color: color)
-                  : Image.asset(imageAssetPath!, fit: BoxFit.cover),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavorite = ref.watch(
+      favoritesIdsProvider.select((ids) => ids.contains(listingId)),
+    );
+
+    return InkWell(
+      onTap: () => context.push('${RouteNames.listingDetails}/$listingId'),
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                width: 108,
+                height: 98,
+                child: imageAssetPath == null
+                    ? Container(color: color)
+                    : Image.asset(imageAssetPath!, fit: BoxFit.cover),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 34 / 2,
-                          fontWeight: FontWeight.w700,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 34 / 2,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    const Icon(Icons.favorite, color: Color(0xFF808697)),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Color(0xFF4E5568)),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Text(
-                      price,
-                      style: const TextStyle(
-                        color: Color(0xFF072A73),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 28 / 2,
+                      InkWell(
+                        onTap: () => ref
+                            .read(favoritesIdsProvider.notifier)
+                            .toggle(listingId),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: const Color(0xFF808697),
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    const Icon(Icons.star, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      rating,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Color(0xFF4E5568)),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(
+                        price,
+                        style: const TextStyle(
+                          color: Color(0xFF072A73),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 28 / 2,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.star, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        rating,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -699,6 +804,181 @@ class _HomeTab extends StatelessWidget {
           ),
         ),
       ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
+    );
+  }
+}
+
+class _FavoritesEntryTab extends StatelessWidget {
+  const _FavoritesEntryTab({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1E2133), Color(0xFF141522)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: const Color(0x1FFFFFFF)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Color(0xB3FFFFFF)),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: () => context.go(RouteNames.favorites),
+                  icon: const Icon(Icons.favorite_border),
+                  label: const Text('Open favorites'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatEntryTab extends StatelessWidget {
+  const _ChatEntryTab({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1E2133), Color(0xFF141522)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: const Color(0x1FFFFFFF)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Color(0xB3FFFFFF)),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: () => context.go(RouteNames.chatList),
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Open chats'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileEntryTab extends StatelessWidget {
+  const _ProfileEntryTab({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1E2133), Color(0xFF141522)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: const Color(0x1FFFFFFF)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Color(0xB3FFFFFF)),
+                ),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => context.go(RouteNames.settings),
+                      icon: const Icon(Icons.settings_outlined),
+                      label: const Text('Settings'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => context.go(RouteNames.support),
+                      icon: const Icon(Icons.support_agent_outlined),
+                      label: const Text('Support'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => context.go(RouteNames.notifications),
+                      icon: const Icon(Icons.notifications_none),
+                      label: const Text('Notifications'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -924,3 +1204,4 @@ class _HostListingsTab extends StatelessWidget {
     );
   }
 }
+

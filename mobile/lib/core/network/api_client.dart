@@ -10,6 +10,8 @@ class ApiClient {
 
   final Dio _dio;
 
+  String get baseUrl => _dio.options.baseUrl;
+
   Future<ApiResult<Map<String, dynamic>>> get(
     String path, {
     Map<String, dynamic>? queryParameters,

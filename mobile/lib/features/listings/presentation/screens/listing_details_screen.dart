@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/route_names.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../reviews/application/review_submit_controller.dart';
 import '../../application/search_controller.dart';
 import '../../domain/models/listing.dart';
+import '../../../wishlist/application/favorites_controller.dart';
 
 class ListingDetailsScreen extends ConsumerWidget {
   const ListingDetailsScreen({super.key, required this.listingId});
@@ -49,19 +51,27 @@ class ListingDetailsScreen extends ConsumerWidget {
 
         final freeStayLocked =
             listing.type == ListingType.freeStay && !hasPremium;
+        final isFavorite = ref.watch(
+          favoritesIdsProvider.select((ids) => ids.contains(listing.id)),
+        );
 
         final imageUrl = listing.imageUrls.isEmpty
             ? null
             : listing.imageUrls.first;
 
         return Scaffold(
-          backgroundColor: const Color(0xFF0E0E14),
+          backgroundColor: const Color(0xFFF4F5F7),
           body: CustomScrollView(
             slivers: [
               SliverAppBar(
                 pinned: true,
                 expandedHeight: 280,
-                leading: const BackButton(),
+                leading: IconButton(
+                  onPressed: () => context.canPop()
+                      ? context.pop()
+                      : context.go(RouteNames.search),
+                  icon: const Icon(Icons.arrow_back),
+                ),
                 actions: [
                   if (isOwner)
                     IconButton(
@@ -76,6 +86,16 @@ class ListingDetailsScreen extends ConsumerWidget {
                           context.push('${RouteNames.editListing}/${listing.id}'),
                       icon: const Icon(Icons.edit_outlined),
                     ),
+                  IconButton(
+                    onPressed: () => ref
+                        .read(favoritesIdsProvider.notifier)
+                        .toggle(listing.id),
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color:
+                          isFavorite ? const Color(0xFFD64545) : Colors.white,
+                    ),
+                  ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   background: _ListingHero(
@@ -105,13 +125,13 @@ class ListingDetailsScreen extends ConsumerWidget {
                           const Icon(
                             Icons.location_on_outlined,
                             size: 18,
-                            color: Color(0xFFB9BBC9),
+                            color: Color(0xFF6D7280),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             '${listing.city}, ${listing.district}',
                             style: const TextStyle(
-                              color: Color(0xFFB9BBC9),
+                              color: Color(0xFF6D7280),
                               fontSize: 14,
                             ),
                           ),
@@ -122,10 +142,46 @@ class ListingDetailsScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                if (listing.imageUrls.length > 1) ...[
+                                  SizedBox(
+                                    height: 84,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: listing.imageUrls.length,
+                                      separatorBuilder: (_, _) =>
+                                          const SizedBox(width: 8),
+                                      itemBuilder: (context, index) {
+                                        final url = listing.imageUrls[index];
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          child: Image.network(
+                                            url,
+                                            width: 110,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, _, _) =>
+                                                Container(
+                                                  width: 110,
+                                                  color: const Color(
+                                                    0xFF263352,
+                                                  ),
+                                                  alignment: Alignment.center,
+                                                  child: const Icon(
+                                                    Icons.image_not_supported,
+                                                  ),
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
                                 Text(
                                   listing.description ?? 'No description yet.',
                                   style: const TextStyle(
-                                    color: Color(0xFFE7E9F3),
+                                    color: Color(0xFF1F2430),
                                     height: 1.45,
                                   ),
                                 ),
@@ -151,6 +207,16 @@ class ListingDetailsScreen extends ConsumerWidget {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 14),
+                                const Text(
+                                  'Reviews',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1F2430),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _ReviewsBlock(listingId: listing.id),
                               ],
                             ),
                           )
@@ -177,14 +243,14 @@ class ListingDetailsScreen extends ConsumerWidget {
                                           'Premium required',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFFF5F5FA),
+                                            color: Color(0xFF1F2430),
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         const Text(
                                           'Free Stay bookings are available only for Premium users.',
                                           style: TextStyle(
-                                            color: Color(0xFFB9BBC9),
+                                            color: Color(0xFF6D7280),
                                           ),
                                         ),
                                         const SizedBox(height: 8),
@@ -215,35 +281,66 @@ class ListingDetailsScreen extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF14141E),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0x33FFFFFF)),
+                border: Border.all(color: const Color(0xFFE1E3E8)),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x44000000),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
+                    color: Color(0x1A0C1833),
+                    blurRadius: 14,
+                    offset: Offset(0, 6),
                   ),
                 ],
               ),
-              child: FilledButton.icon(
-                onPressed: freeStayLocked
-                    ? null
-                    : () {
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => isOwner
+                          ? context.push('${RouteNames.editListing}/${listing.id}')
+                          : context.push(
+                                '${RouteNames.chatList}?listingId=${listing.id}&hostId=${listing.hostId}',
+                              ),
+                      icon: Icon(
+                        isOwner ? Icons.edit_outlined : Icons.chat_bubble_outline,
+                      ),
+                      label: Text(isOwner ? 'Edit listing' : 'Chat'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        if (freeStayLocked) {
+                          context.push(RouteNames.premiumPaywall);
+                          return;
+                        }
+                        if (isOwner) {
+                          context.push(
+                            '${RouteNames.listingAvailability}/${listing.id}',
+                          );
+                          return;
+                        }
                         context.push(
                           '${RouteNames.bookingRequest}/${listing.id}',
                         );
                       },
-                icon: const Icon(Icons.event_available_outlined),
-                label: Text(
-                  freeStayLocked ? 'Premium required' : 'Request booking',
-                ),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                      icon: const Icon(Icons.event_available_outlined),
+                      label: Text(
+                        freeStayLocked
+                            ? 'Premium required'
+                            : (isOwner ? 'Manage calendar' : 'Request booking'),
+                      ),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.3, end: 0),
           ),
@@ -295,7 +392,7 @@ class _ListingHero extends StatelessWidget {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF222436), Color(0xFF151726)],
+          colors: [Color(0xFFCEDCF5), Color(0xFFDDE7FA)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -304,11 +401,11 @@ class _ListingHero extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.home_work_outlined, size: 34, color: Colors.white),
+            const Icon(Icons.home_work_outlined, size: 34, color: Color(0xFF072A73)),
             const SizedBox(height: 8),
             Text(
               '$city, $district',
-              style: const TextStyle(color: Color(0xD9FFFFFF)),
+              style: const TextStyle(color: Color(0xFF1F2430)),
             ),
           ],
         ),
@@ -328,9 +425,9 @@ class _InfoPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF14141E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x33FFFFFF)),
+        border: Border.all(color: const Color(0xFFE1E3E8)),
       ),
       child: child,
     );
@@ -348,20 +445,97 @@ class _SoftTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isAccent ? const Color(0x33C8A84B) : const Color(0x1FFFFFFF),
+        color: isAccent ? const Color(0xFFF7E9C2) : const Color(0xFFF0F2F6),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: isAccent ? const Color(0x66C8A84B) : const Color(0x33FFFFFF),
+          color: isAccent ? const Color(0xFFC8A84B) : const Color(0xFFD6D9E0),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 12,
-          color: isAccent ? const Color(0xFFF4DE9B) : const Color(0xFFE7E9F3),
+          color: isAccent ? const Color(0xFF6A480A) : const Color(0xFF2A3040),
           fontWeight: isAccent ? FontWeight.w600 : FontWeight.w500,
         ),
       ),
+    );
+  }
+}
+
+class _ReviewsBlock extends ConsumerWidget {
+  const _ReviewsBlock({required this.listingId});
+
+  final String listingId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reviewsAsync = ref.watch(listingReviewsProvider(listingId));
+
+    return reviewsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 6),
+        child: LinearProgressIndicator(minHeight: 2),
+      ),
+      error: (_, _) => const Text(
+        'Could not load reviews yet.',
+        style: TextStyle(color: Color(0xFF6D7280)),
+      ),
+      data: (items) {
+        if (items.isEmpty) {
+          return const Text(
+            'No reviews yet.',
+            style: TextStyle(color: Color(0xFF6D7280)),
+          );
+        }
+
+        final average = items
+                .map((item) => item.rating)
+                .fold<int>(0, (sum, next) => sum + next) /
+            items.length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${average.toStringAsFixed(1)} / 5 (${items.length})',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF072A73),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...items.take(3).map(
+                  (item) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE1E3E8)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Rating: ${item.rating}/5',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F2430),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.comment,
+                          style: const TextStyle(color: Color(0xFF2A3040)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        );
+      },
     );
   }
 }

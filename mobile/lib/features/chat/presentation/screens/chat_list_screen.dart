@@ -10,10 +10,43 @@ import '../../domain/models/chat_thread.dart';
 import '../../domain/models/message.dart';
 
 class ChatListScreen extends ConsumerWidget {
-  const ChatListScreen({super.key});
+  const ChatListScreen({
+    super.key,
+    this.initialListingId,
+    this.initialHostId,
+  });
+
+  final String? initialListingId;
+  final String? initialHostId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return _ChatListView(
+      initialListingId: initialListingId,
+      initialHostId: initialHostId,
+    );
+  }
+}
+
+class _ChatListView extends ConsumerStatefulWidget {
+  const _ChatListView({
+    required this.initialListingId,
+    required this.initialHostId,
+  });
+
+  final String? initialListingId;
+  final String? initialHostId;
+
+  @override
+  ConsumerState<_ChatListView> createState() => _ChatListViewState();
+}
+
+class _ChatListViewState extends ConsumerState<_ChatListView> {
+  bool _openingInitial = false;
+  bool _initialHandled = false;
+
+  @override
+  Widget build(BuildContext context) {
     final threadsAsync = ref.watch(chatThreadsProvider);
 
     return Scaffold(
@@ -31,6 +64,8 @@ class ChatListScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(chatThreadsProvider),
         ),
         data: (threads) {
+          _maybeOpenInitialThread(threads);
+
           if (threads.isEmpty) {
             return const EmptyStateView(
               title: 'No conversations yet',
@@ -70,6 +105,46 @@ class ChatListScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  void _maybeOpenInitialThread(List<ChatThread> threads) {
+    if (_initialHandled || _openingInitial) {
+      return;
+    }
+    final listingId = widget.initialListingId;
+    final hostId = widget.initialHostId;
+    if (listingId == null || listingId.isEmpty) {
+      _initialHandled = true;
+      return;
+    }
+
+    _openingInitial = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final existing = threads
+            .where((thread) => thread.listingId == listingId)
+            .toList(growable: false);
+        if (existing.isNotEmpty) {
+          _openThread(context, ref, existing.first);
+          return;
+        }
+
+        if (hostId != null && hostId.isNotEmpty) {
+          final created = await ref
+              .read(chatActionsProvider)
+              .createOrGetThread(listingId: listingId, hostUserId: hostId);
+          if (!mounted) {
+            return;
+          }
+          _openThread(context, ref, created);
+        }
+      } catch (_) {
+        // Keep chat list usable even if pre-open fails.
+      } finally {
+        _initialHandled = true;
+        _openingInitial = false;
+      }
+    });
   }
 
   void _openThread(BuildContext context, WidgetRef ref, ChatThread thread) {

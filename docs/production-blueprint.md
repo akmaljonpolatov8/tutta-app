@@ -182,6 +182,9 @@ Indexes:
   - booking UI now consumes availability and prevents selecting blocked dates before submit
   - launch readiness checklist added for migrations/tests/smoke paths
   - checkout calendar upgraded from static mock to availability-aware month grid
+  - notifications foundation added (backend module + mobile notifications screen)
+  - automatic in-app notifications on booking and listing moderation lifecycle events
+  - push-device token registry API added (`register/unregister`) for FCM/APNs bridge
 
 ## 12) Next Phase Plan
 1. Stabilize API contracts for listings/search and booking lifecycle.

@@ -13,24 +13,39 @@ class RoleSelectorScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFF060814),
+      backgroundColor: const Color(0xFFF4F5F7),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: () => context.go(RouteNames.auth),
+                icon: const Icon(Icons.arrow_back, color: Color(0xFF072A73)),
+              ),
+            ),
             const Text(
               'Choose mode',
-              style: TextStyle(fontSize: 46, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 46,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF072A73),
+              ),
             ).animate().fadeIn(duration: 220.ms).slideY(begin: 0.08, end: 0),
             const SizedBox(height: 28),
             const Text(
               'How do you want to use Tutta?',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B2336),
+              ),
             ).animate(delay: 60.ms).fadeIn(duration: 220.ms),
             const SizedBox(height: 10),
             const Text(
               'You can switch roles later in profile settings.',
-              style: TextStyle(fontSize: 16, color: Color(0xFFD2D6E4)),
+              style: TextStyle(fontSize: 16, color: Color(0xFF4E566A)),
             ).animate(delay: 90.ms).fadeIn(duration: 220.ms),
             const SizedBox(height: 22),
             _RoleCard(
@@ -87,12 +102,12 @@ class _RoleCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF14182A), Color(0xFF101424)],
+          colors: [Color(0xFFEEF2FA), Color(0xFFE4EBF8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x2EFFFFFF)),
+        border: Border.all(color: const Color(0xFFCBD6EA)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -107,10 +122,10 @@ class _RoleCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: const Color(0x1FFFFFFF),
+                    color: const Color(0xFFCFD9EE),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: const Color(0xFFE8ECFA), size: 20),
+                  child: Icon(icon, color: const Color(0xFF1F2E52), size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -122,6 +137,7 @@ class _RoleCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
+                          color: Color(0xFF172547),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -129,13 +145,17 @@ class _RoleCard extends StatelessWidget {
                         subtitle,
                         style: const TextStyle(
                           fontSize: 15,
-                          color: Color(0xFFD2D6E4),
+                          color: Color(0xFF4F5D78),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, size: 28),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 28,
+                  color: Color(0xFF22335A),
+                ),
               ],
             ),
           ),

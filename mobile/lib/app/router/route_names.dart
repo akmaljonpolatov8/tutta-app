@@ -6,6 +6,7 @@ abstract final class RouteNames {
   static const roleSelector = '/role-selector';
   static const home = '/home';
   static const search = '/search';
+  static const searchMap = '/search/map';
   static const listingDetails = '/listing';
   static const createListing = '/host/listings/new';
   static const editListing = '/host/listings/edit';
@@ -18,6 +19,7 @@ abstract final class RouteNames {
   static const hostRequests = '/host-requests';
   static const chatList = '/chat';
   static const premiumPaywall = '/premium';
+  static const notifications = '/notifications';
   static const support = '/support';
   static const settings = '/settings';
 }

@@ -3,7 +3,28 @@ import '../../domain/models/review.dart';
 import '../../domain/repositories/reviews_repository.dart';
 
 class FakeReviewsRepository implements ReviewsRepository {
-  final List<Review> _reviews = <Review>[];
+  final List<Review> _reviews = <Review>[
+    Review(
+      id: 'seed_review_1',
+      bookingId: 'seed_completed_1',
+      listingId: 'l1',
+      reviewerUserId: 'guest_demo_2',
+      hostUserId: 'h1',
+      rating: 5,
+      comment: 'Great location and very clean apartment. Host was responsive.',
+      createdAt: DateTime(2026, 2, 2),
+    ),
+    Review(
+      id: 'seed_review_2',
+      bookingId: 'seed_completed_2',
+      listingId: 'l1',
+      reviewerUserId: 'guest_demo_3',
+      hostUserId: 'h1',
+      rating: 4,
+      comment: 'Comfortable stay, metro is really close.',
+      createdAt: DateTime(2026, 2, 14),
+    ),
+  ];
 
   @override
   Future<Review> submitReview({

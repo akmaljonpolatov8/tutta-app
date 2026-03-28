@@ -28,6 +28,9 @@
 6. Host availability calendar -> block/unblock dates.
 7. Booking rejects blocked dates and overlaps.
 8. Admin listing approve/reject visibility behavior.
+9. Notifications list and mark-read actions.
+10. Booking/listing actions generate in-app notifications for target users.
+11. Push device token register/unregister endpoints work for authenticated users.
 
 ## Production Flags
 - Mobile runtime flags:
@@ -41,4 +44,4 @@
 ## Known Follow-ups (Post-MVP Hardening)
 - Add server-side pagination/filters for availability range (`from`, `to`).
 - Add payment reconciliation webhooks for real Click/Payme credentials.
-- Add push notifications for booking lifecycle events.
+- Wire FCM/APNs sender worker using registered push device tokens.
