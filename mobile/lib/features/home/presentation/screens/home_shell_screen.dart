@@ -176,11 +176,86 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 }
 
-class _RenterHomeTab extends ConsumerWidget {
+class _RenterHomeTab extends ConsumerStatefulWidget {
   const _RenterHomeTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RenterHomeTab> createState() => _RenterHomeTabState();
+}
+
+class _RenterHomeTabState extends ConsumerState<_RenterHomeTab> {
+  String _locationLabel = 'Anywhere';
+  String _weekLabel = 'Any week';
+
+  Future<void> _pickLocation() async {
+    final search = ref.read(searchControllerProvider.notifier);
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        const cities = <String>[
+          'Tashkent',
+          'Samarkand',
+          'Bukhara',
+          'Andijan',
+          'Namangan',
+          'Fergana',
+        ];
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: cities
+                .map(
+                  (city) => ListTile(
+                    leading: const Icon(Icons.place_outlined),
+                    title: Text(city),
+                    onTap: () => Navigator.of(context).pop(city),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        );
+      },
+    );
+
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() => _locationLabel = picked);
+    search.setCity(picked);
+    await search.search();
+    if (mounted) {
+      context.go(RouteNames.search);
+    }
+  }
+
+  Future<void> _pickWeek() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 365)),
+      helpText: 'Select stay dates',
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    final nights = picked.end.difference(picked.start).inDays;
+    if (nights > 30) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum stay is 30 nights. Please choose shorter dates.'),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _weekLabel = '${picked.start.day}.${picked.start.month} - ${picked.end.day}.${picked.end.month}';
+    });
+    context.go(RouteNames.search);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 22),
@@ -212,6 +287,114 @@ class _RenterHomeTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0D2D82), Color(0xFF1A5EFF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x331A5EFF),
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Find your next stay in Uzbekistan',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Verified hosts, short-term only, and booking flow built for local travel.',
+                  style: TextStyle(color: Color(0xE6FFFFFF), height: 1.35),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: () => context.go(RouteNames.search),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF0D2D82),
+                          minimumSize: const Size.fromHeight(44),
+                        ),
+                        icon: const Icon(Icons.search),
+                        label: const Text('Explore homes'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final search = ref.read(searchControllerProvider.notifier);
+                          search.setIncludeFreeStay(true);
+                          search.search();
+                          context.go(RouteNames.search);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0x66FFFFFF)),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(44),
+                        ),
+                        icon: const Icon(Icons.swap_horiz),
+                        label: const Text('Free Stay'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _QuickCityChip(
+                  label: 'Tashkent',
+                  onTap: () {
+                    final search = ref.read(searchControllerProvider.notifier);
+                    search.setCity('Tashkent');
+                    search.search();
+                    context.go(RouteNames.search);
+                  },
+                ),
+                _QuickCityChip(
+                  label: 'Samarkand',
+                  onTap: () {
+                    final search = ref.read(searchControllerProvider.notifier);
+                    search.setCity('Samarkand');
+                    search.search();
+                    context.go(RouteNames.search);
+                  },
+                ),
+                _QuickCityChip(
+                  label: 'Bukhara',
+                  onTap: () {
+                    final search = ref.read(searchControllerProvider.notifier);
+                    search.setCity('Bukhara');
+                    search.search();
+                    context.go(RouteNames.search);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
           InkWell(
             onTap: () => context.go(RouteNames.search),
             borderRadius: BorderRadius.circular(999),
@@ -243,16 +426,16 @@ class _RenterHomeTab extends ConsumerWidget {
               Expanded(
                 child: _HomePill(
                   icon: Icons.place_outlined,
-                  label: 'Anywhere',
-                  onTap: () => context.go(RouteNames.search),
+                  label: _locationLabel,
+                  onTap: _pickLocation,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _HomePill(
                   icon: Icons.calendar_month_outlined,
-                  label: 'Any week',
-                  onTap: () => context.go(RouteNames.search),
+                  label: _weekLabel,
+                  onTap: _pickWeek,
                 ),
               ),
             ],
@@ -344,7 +527,23 @@ class _RenterHomeTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const _FeaturedStayCard(listingId: 'l1'),
+          const _FeaturedStayCard(
+            listingId: 'l1',
+            title: 'Amirsoy Mountain Chalet',
+            location: 'Tashkent Region, Uzbekistan',
+            price: '1 350 000 UZS / night',
+            rating: '4.92',
+            imageAssetPath: 'assets/images/home1.png',
+          ),
+          const SizedBox(height: 12),
+          const _FeaturedStayCard(
+            listingId: 'l4',
+            title: 'Modern Loft in Mirobod',
+            location: 'Mirobod, Tashkent',
+            price: '510 000 UZS / night',
+            rating: '4.85',
+            imageAssetPath: 'assets/images/home2.png',
+          ),
           const SizedBox(height: 18),
           const Text(
             'Nearby Gems',
@@ -427,6 +626,46 @@ class _HomePill extends StatelessWidget {
   }
 }
 
+class _QuickCityChip extends StatelessWidget {
+  const _QuickCityChip({
+    required this.label,
+    required this.onTap,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFDCE3EF)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.location_city_outlined, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SegmentTile extends StatelessWidget {
   const _SegmentTile({
     required this.label,
@@ -486,9 +725,21 @@ class _SegmentTile extends StatelessWidget {
 }
 
 class _FeaturedStayCard extends ConsumerWidget {
-  const _FeaturedStayCard({required this.listingId});
+  const _FeaturedStayCard({
+    required this.listingId,
+    required this.title,
+    required this.location,
+    required this.price,
+    required this.rating,
+    required this.imageAssetPath,
+  });
 
   final String listingId;
+  final String title;
+  final String location;
+  final String price;
+  final String rating;
+  final String imageAssetPath;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -513,7 +764,7 @@ class _FeaturedStayCard extends ConsumerWidget {
                   height: 320,
                   width: double.infinity,
                   child: Image.asset(
-                    'assets/images/home1.png',
+                    imageAssetPath,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -529,9 +780,9 @@ class _FeaturedStayCard extends ConsumerWidget {
                       color: Color(0xFF072A73),
                       borderRadius: BorderRadius.all(Radius.circular(999)),
                     ),
-                    child: const Text(
-                      '1 350 000 UZS / night',
-                      style: TextStyle(
+                    child: Text(
+                      price,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
@@ -559,13 +810,13 @@ class _FeaturedStayCard extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
               child: Row(
-                children: const [
+                children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Amirsoy Mountain Chalet',
+                          title,
                           style: TextStyle(
                             color: Color(0xFF071E57),
                             fontSize: 34 / 2,
@@ -574,13 +825,13 @@ class _FeaturedStayCard extends ConsumerWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Tashkent Region, Uzbekistan',
+                          location,
                           style: TextStyle(color: Color(0xFF4E5568)),
                         ),
                       ],
                     ),
                   ),
-                  _RatingBadge(value: '4.92'),
+                  _RatingBadge(value: rating),
                 ],
               ),
             ),

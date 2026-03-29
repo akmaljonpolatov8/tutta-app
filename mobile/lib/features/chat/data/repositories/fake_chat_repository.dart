@@ -13,6 +13,24 @@ class FakeChatRepository implements ChatRepository {
       lastMessage: null,
       unreadCount: 0,
     ),
+    ChatThread(
+      id: '2',
+      listingId: 'l4',
+      guestUserId: 'user_demo_1',
+      hostUserId: 'h4',
+      createdAt: DateTime.now().subtract(const Duration(hours: 19)),
+      lastMessage: null,
+      unreadCount: 1,
+    ),
+    ChatThread(
+      id: '3',
+      listingId: 'l5',
+      guestUserId: 'user_demo_1',
+      hostUserId: 'h5',
+      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+      lastMessage: null,
+      unreadCount: 0,
+    ),
   ];
 
   final Map<String, List<Message>> _messagesByThread = <String, List<Message>>{
@@ -30,6 +48,31 @@ class FakeChatRepository implements ChatRepository {
         senderUserId: 'user_demo_1',
         body: 'Rahmat, tushundim.',
         sentAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ),
+    ],
+    '2': <Message>[
+      Message(
+        id: 'm3',
+        conversationId: '2',
+        senderUserId: 'user_demo_1',
+        body: 'Hi, is late check-in possible around 23:00?',
+        sentAt: DateTime.now().subtract(const Duration(hours: 4)),
+      ),
+      Message(
+        id: 'm4',
+        conversationId: '2',
+        senderUserId: 'h4',
+        body: 'Yes, self check-in is available.',
+        sentAt: DateTime.now().subtract(const Duration(hours: 3)),
+      ),
+    ],
+    '3': <Message>[
+      Message(
+        id: 'm5',
+        conversationId: '3',
+        senderUserId: 'h5',
+        body: 'Apartment is ready for family with kids.',
+        sentAt: DateTime.now().subtract(const Duration(hours: 1)),
       ),
     ],
   };

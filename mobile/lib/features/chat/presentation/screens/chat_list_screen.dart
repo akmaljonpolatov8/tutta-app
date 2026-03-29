@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/empty_state_view.dart';
+import '../../../auth/application/auth_controller.dart';
 import '../../application/chat_provider.dart';
 import '../../domain/models/chat_thread.dart';
 import '../../domain/models/message.dart';
@@ -81,23 +82,47 @@ class _ChatListViewState extends ConsumerState<_ChatListView> {
               final thread = threads[index];
               return ListTile(
                 tileColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
                 ),
-                title: Text('Listing #${thread.listingId}'),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                leading: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8EEF9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.chat_bubble_outline),
+                ),
+                title: Text(
+                  'Listing #${thread.listingId}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 subtitle: Text(
                   thread.lastMessage?.isNotEmpty == true
                       ? thread.lastMessage!
-                      : 'No messages yet',
+                      : 'Tap to start conversation',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 trailing: thread.unreadCount > 0
                     ? CircleAvatar(
-                        radius: 12,
-                        child: Text('${thread.unreadCount}'),
+                        radius: 11,
+                        backgroundColor: const Color(0xFF1A5EFF),
+                        child: Text(
+                          '${thread.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       )
-                    : null,
+                    : const Icon(Icons.chevron_right, color: Color(0xFF74809B)),
                 onTap: () => _openThread(context, ref, thread),
               );
             },
@@ -179,6 +204,8 @@ class _ThreadViewState extends ConsumerState<_ThreadView> {
   @override
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(chatMessagesProvider(widget.thread.id));
+    final currentUserId =
+        ref.watch(authControllerProvider).valueOrNull?.user?.id ?? 'user_demo_1';
 
     return Padding(
       padding: EdgeInsets.only(
@@ -191,9 +218,31 @@ class _ThreadViewState extends ConsumerState<_ThreadView> {
         height: MediaQuery.of(context).size.height * 0.75,
         child: Column(
           children: [
-            Text(
-              'Chat: Listing #${widget.thread.listingId}',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8EEF9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.home_work_outlined),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Listing #${widget.thread.listingId}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -204,9 +253,10 @@ class _ThreadViewState extends ConsumerState<_ThreadView> {
                   onRetry: () =>
                       ref.invalidate(chatMessagesProvider(widget.thread.id)),
                 ),
-                data: _buildMessages,
+                data: (messages) => _buildMessages(messages, currentUserId),
               ),
             ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -214,6 +264,7 @@ class _ThreadViewState extends ConsumerState<_ThreadView> {
                     controller: _controller,
                     minLines: 1,
                     maxLines: 4,
+                    onSubmitted: (_) => _send(),
                     decoration: const InputDecoration(
                       hintText: 'Type a message',
                     ),
@@ -232,7 +283,7 @@ class _ThreadViewState extends ConsumerState<_ThreadView> {
     );
   }
 
-  Widget _buildMessages(List<Message> messages) {
+  Widget _buildMessages(List<Message> messages, String currentUserId) {
     if (messages.isEmpty) {
       return const EmptyStateView(
         title: 'No messages',
@@ -246,16 +297,49 @@ class _ThreadViewState extends ConsumerState<_ThreadView> {
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final message = messages[messages.length - 1 - index];
-        return Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(10),
+        final mine = message.senderUserId == currentUserId;
+        return Align(
+          alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 290),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: mine ? const Color(0xFF1A5EFF) : const Color(0xFFF2F5FB),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.body,
+                    style: TextStyle(
+                      color: mine ? Colors.white : const Color(0xFF1F2430),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _timeLabel(message.sentAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: mine
+                          ? const Color(0xB3FFFFFF)
+                          : const Color(0xFF7A8397),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: Text(message.body),
         );
       },
     );
+  }
+
+  String _timeLabel(DateTime time) {
+    final hh = time.hour.toString().padLeft(2, '0');
+    final mm = time.minute.toString().padLeft(2, '0');
+    return '$hh:$mm';
   }
 
   Future<void> _send() async {

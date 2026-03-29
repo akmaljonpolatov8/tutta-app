@@ -11,11 +11,15 @@ import '../domain/models/listing_search_params.dart';
 import '../domain/repositories/listings_repository.dart';
 
 class SearchState {
+  static const Object _unset = Object();
+
   const SearchState({
     required this.city,
     required this.district,
     required this.guests,
     required this.includeFreeStay,
+    required this.minPriceUzs,
+    required this.maxPriceUzs,
     required this.types,
     required this.amenities,
     required this.items,
@@ -28,6 +32,8 @@ class SearchState {
       district = '',
       guests = 1,
       includeFreeStay = false,
+      minPriceUzs = null,
+      maxPriceUzs = null,
       types = const <ListingType>[],
       amenities = const <ListingAmenity>[],
       items = const <Listing>[],
@@ -38,6 +44,8 @@ class SearchState {
   final String district;
   final int guests;
   final bool includeFreeStay;
+  final int? minPriceUzs;
+  final int? maxPriceUzs;
   final List<ListingType> types;
   final List<ListingAmenity> amenities;
   final List<Listing> items;
@@ -49,6 +57,8 @@ class SearchState {
     String? district,
     int? guests,
     bool? includeFreeStay,
+    Object? minPriceUzs = _unset,
+    Object? maxPriceUzs = _unset,
     List<ListingType>? types,
     List<ListingAmenity>? amenities,
     List<Listing>? items,
@@ -61,6 +71,8 @@ class SearchState {
       district: district ?? this.district,
       guests: guests ?? this.guests,
       includeFreeStay: includeFreeStay ?? this.includeFreeStay,
+      minPriceUzs: minPriceUzs == _unset ? this.minPriceUzs : minPriceUzs as int?,
+      maxPriceUzs: maxPriceUzs == _unset ? this.maxPriceUzs : maxPriceUzs as int?,
       types: types ?? this.types,
       amenities: amenities ?? this.amenities,
       items: items ?? this.items,
@@ -103,6 +115,14 @@ class SearchController extends StateNotifier<SearchState> {
     state = state.copyWith(amenities: amenities, clearError: true);
   }
 
+  void setPriceRange({int? minPriceUzs, int? maxPriceUzs}) {
+    state = state.copyWith(
+      minPriceUzs: minPriceUzs,
+      maxPriceUzs: maxPriceUzs,
+      clearError: true,
+    );
+  }
+
   Future<void> search() async {
     state = state.copyWith(loading: true, clearError: true);
 
@@ -115,6 +135,8 @@ class SearchController extends StateNotifier<SearchState> {
         district: state.district,
         guests: state.guests,
         includeFreeStay: state.includeFreeStay,
+        minPriceUzs: state.minPriceUzs,
+        maxPriceUzs: state.maxPriceUzs,
         types: state.types,
         amenities: state.amenities,
       );

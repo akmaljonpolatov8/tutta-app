@@ -57,6 +57,195 @@ class FakeListingsRepository implements ListingsRepository {
       ],
     ),
     Listing(
+      id: 'l4',
+      hostId: 'h4',
+      title: 'Modern loft in City Center',
+      city: 'Tashkent',
+      district: 'Mirobod',
+      type: ListingType.apartment,
+      maxGuests: 2,
+      minDays: 1,
+      maxDays: 20,
+      nightlyPriceUzs: 510000,
+      isActive: true,
+      amenities: [
+        ListingAmenity.wifi,
+        ListingAmenity.airConditioner,
+        ListingAmenity.kitchen,
+        ListingAmenity.privateBathroom,
+      ],
+      landmark: 'Tashkent City',
+      metro: 'Kosmonavtlar',
+      description: 'Bright loft with cozy interior and fast Wi-Fi.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l5',
+      hostId: 'h5',
+      title: 'Family apartment near Magic City',
+      city: 'Tashkent',
+      district: 'Chilonzor',
+      type: ListingType.apartment,
+      maxGuests: 4,
+      minDays: 2,
+      maxDays: 30,
+      nightlyPriceUzs: 690000,
+      isActive: true,
+      amenities: [
+        ListingAmenity.wifi,
+        ListingAmenity.kitchen,
+        ListingAmenity.washingMachine,
+        ListingAmenity.kidsAllowed,
+      ],
+      landmark: 'Magic City',
+      description: 'Spacious apartment for family short stays.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l6',
+      hostId: 'h6',
+      title: 'Compact studio close to metro',
+      city: 'Tashkent',
+      district: 'Shaykhontohur',
+      type: ListingType.room,
+      maxGuests: 2,
+      minDays: 1,
+      maxDays: 12,
+      nightlyPriceUzs: 330000,
+      isActive: true,
+      amenities: [
+        ListingAmenity.wifi,
+        ListingAmenity.airConditioner,
+        ListingAmenity.privateBathroom,
+      ],
+      metro: 'Paxtakor',
+      description: 'Perfect for weekend trips and business visits.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l7',
+      hostId: 'h7',
+      title: 'Minimal room in quiet district',
+      city: 'Tashkent',
+      district: 'Yakkasaray',
+      type: ListingType.room,
+      maxGuests: 1,
+      minDays: 1,
+      maxDays: 10,
+      nightlyPriceUzs: 240000,
+      isActive: true,
+      amenities: [ListingAmenity.wifi, ListingAmenity.hostLivesTogether],
+      description: 'Calm neighborhood and clean room.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l8',
+      hostId: 'h8',
+      title: 'Part of home with private entrance',
+      city: 'Tashkent',
+      district: 'Yunusabad',
+      type: ListingType.homePart,
+      maxGuests: 3,
+      minDays: 2,
+      maxDays: 25,
+      nightlyPriceUzs: 470000,
+      isActive: true,
+      amenities: [
+        ListingAmenity.wifi,
+        ListingAmenity.parking,
+        ListingAmenity.kitchen,
+      ],
+      landmark: 'Minor',
+      description: 'Independent entrance and flexible check-in.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l9',
+      hostId: 'h9',
+      title: 'Business stay near central avenue',
+      city: 'Tashkent',
+      district: 'Mirzo Ulugbek',
+      type: ListingType.apartment,
+      maxGuests: 2,
+      minDays: 1,
+      maxDays: 14,
+      nightlyPriceUzs: 560000,
+      isActive: true,
+      amenities: [
+        ListingAmenity.wifi,
+        ListingAmenity.airConditioner,
+        ListingAmenity.washingMachine,
+      ],
+      description: 'Comfortable for business trips and short visits.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1464890100898-a385f744067f?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l10',
+      hostId: 'h10',
+      title: 'Quiet apartment for couples',
+      city: 'Tashkent',
+      district: 'Olmazor',
+      type: ListingType.apartment,
+      maxGuests: 2,
+      minDays: 2,
+      maxDays: 18,
+      nightlyPriceUzs: 480000,
+      isActive: true,
+      amenities: [ListingAmenity.wifi, ListingAmenity.kitchen, ListingAmenity.petsAllowed],
+      description: 'Quiet building with cozy interior.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l11',
+      hostId: 'h11',
+      title: 'Free Stay: culture exchange in old mahalla',
+      city: 'Tashkent',
+      district: 'Shaykhontohur',
+      type: ListingType.freeStay,
+      maxGuests: 1,
+      minDays: 3,
+      maxDays: 14,
+      nightlyPriceUzs: null,
+      isActive: true,
+      amenities: [ListingAmenity.hostLivesTogether, ListingAmenity.kitchen],
+      description: 'Stay for free while practicing Uzbek and Russian.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1556911220-bda9f7f7597e?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l12',
+      hostId: 'h12',
+      title: 'Comfort studio with parking',
+      city: 'Tashkent',
+      district: 'Bektemir',
+      type: ListingType.room,
+      maxGuests: 2,
+      minDays: 1,
+      maxDays: 21,
+      nightlyPriceUzs: 300000,
+      isActive: true,
+      amenities: [ListingAmenity.wifi, ListingAmenity.parking, ListingAmenity.kitchen],
+      description: 'Affordable stay with free parking.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1502672023488-70e25813eb80?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
       id: 'l3',
       hostId: 'h3',
       title: 'Free Stay: Uzbek-English language exchange',
@@ -72,6 +261,25 @@ class FakeListingsRepository implements ListingsRepository {
       description: 'Practice English and Uzbek through cultural exchange.',
       imageUrls: [
         'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80',
+      ],
+    ),
+    Listing(
+      id: 'l13',
+      hostId: 'h13',
+      title: 'Old city apartment for short stays',
+      city: 'Bukhara',
+      district: 'Old City',
+      type: ListingType.apartment,
+      maxGuests: 3,
+      minDays: 1,
+      maxDays: 20,
+      nightlyPriceUzs: 530000,
+      isActive: true,
+      amenities: [ListingAmenity.wifi, ListingAmenity.airConditioner, ListingAmenity.kitchen],
+      landmark: 'Lyabi-Hauz',
+      description: 'Historic area with modern comfort.',
+      imageUrls: [
+        'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=1200&q=80',
       ],
     ),
   ];
@@ -131,6 +339,19 @@ class FakeListingsRepository implements ListingsRepository {
 
           if (params.amenities.isNotEmpty &&
               !params.amenities.every(listing.amenities.contains)) {
+            return false;
+          }
+
+          if (listing.nightlyPriceUzs != null) {
+            if (params.minPriceUzs != null &&
+                listing.nightlyPriceUzs! < params.minPriceUzs!) {
+              return false;
+            }
+            if (params.maxPriceUzs != null &&
+                listing.nightlyPriceUzs! > params.maxPriceUzs!) {
+              return false;
+            }
+          } else if (params.minPriceUzs != null || params.maxPriceUzs != null) {
             return false;
           }
 

@@ -201,10 +201,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               if (!_isSignUp)
                 Row(
                   children: [
-                    IconButton(
-                      onPressed: () => context.go(RouteNames.onboarding),
-                      icon: const Icon(Icons.menu, color: Color(0xFF072A73)),
-                    ),
+                    const Icon(Icons.menu, color: Color(0xFF072A73)),
                     const Spacer(),
                     const Text(
                       'Tutta',
@@ -215,16 +212,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                     const Spacer(),
-                    IconButton(
-                      onPressed: () => context.go(RouteNames.support),
-                      icon: const CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Color(0xFFF3CDAD),
-                        child: Icon(
-                          Icons.person,
-                          size: 18,
-                          color: Color(0xFFB78664),
-                        ),
+                    const CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Color(0xFFF3CDAD),
+                      child: Icon(
+                        Icons.person,
+                        size: 18,
+                        color: Color(0xFFB78664),
                       ),
                     ),
                   ],
@@ -391,15 +385,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   const _FieldLabel(text: 'PASSWORD'),
                   const Spacer(),
                   if (!_isSignUp)
-                    TextButton(
-                      onPressed: () => context.go(RouteNames.support),
-                      child: const Text(
-                        'FORGOT PASSWORD?',
-                        style: TextStyle(
-                          color: Color(0xFF6A480A),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.1,
-                        ),
+                    const Text(
+                      'FORGOT PASSWORD?',
+                      style: TextStyle(
+                        color: Color(0xFF6A480A),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.1,
                       ),
                     ),
                 ],

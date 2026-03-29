@@ -6,6 +6,8 @@ class ListingSearchParams {
     required this.district,
     required this.guests,
     required this.includeFreeStay,
+    this.minPriceUzs,
+    this.maxPriceUzs,
     this.types = const <ListingType>[],
     this.amenities = const <ListingAmenity>[],
   });
@@ -14,6 +16,8 @@ class ListingSearchParams {
   final String district;
   final int guests;
   final bool includeFreeStay;
+  final int? minPriceUzs;
+  final int? maxPriceUzs;
   final List<ListingType> types;
   final List<ListingAmenity> amenities;
 }

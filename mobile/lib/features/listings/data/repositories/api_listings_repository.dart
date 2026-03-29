@@ -32,6 +32,8 @@ class ApiListingsRepository implements ListingsRepository {
         if (params.city.trim().isNotEmpty) 'q': params.city.trim(),
         if (params.district.trim().isNotEmpty) 'district': params.district.trim(),
         'guests': params.guests,
+        if (params.minPriceUzs != null) 'min_price': params.minPriceUzs,
+        if (params.maxPriceUzs != null) 'max_price': params.maxPriceUzs,
         if (params.types.isNotEmpty)
           'type': _mapTypeToApi(params.types.first),
       },
@@ -162,6 +164,18 @@ class ApiListingsRepository implements ListingsRepository {
       }
       if (params.amenities.isNotEmpty &&
           !params.amenities.every(listing.amenities.contains)) {
+        return false;
+      }
+      if (listing.nightlyPriceUzs != null) {
+        if (params.minPriceUzs != null &&
+            listing.nightlyPriceUzs! < params.minPriceUzs!) {
+          return false;
+        }
+        if (params.maxPriceUzs != null &&
+            listing.nightlyPriceUzs! > params.maxPriceUzs!) {
+          return false;
+        }
+      } else if (params.minPriceUzs != null || params.maxPriceUzs != null) {
         return false;
       }
       return true;

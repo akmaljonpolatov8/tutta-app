@@ -205,6 +205,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           icon: Icons.checklist_rounded,
                           onTap: () => _openFiltersSheet(context, state),
                         ),
+                        _FilterPill(
+                          label: _priceLabel(state.minPriceUzs, state.maxPriceUzs),
+                          icon: Icons.payments_outlined,
+                          onTap: () => _openFiltersSheet(context, state),
+                        ),
                       ],
                     ),
                   ],
@@ -353,6 +358,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final districtController = TextEditingController(text: state.district);
     final selectedTypes = state.types.toSet();
     final selectedAmenities = state.amenities.toSet();
+    var selectedPricePreset = _selectedPricePreset(
+      min: state.minPriceUzs,
+      max: state.maxPriceUzs,
+    );
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -437,6 +446,57 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         .toList(growable: false),
                   ),
                   const SizedBox(height: 14),
+                  const Text(
+                    'Price range (UZS / night)',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _PricePresetChip(
+                        label: 'Any',
+                        selected: selectedPricePreset == _PricePreset.any,
+                        onTap: () => setModalState(
+                          () => selectedPricePreset = _PricePreset.any,
+                        ),
+                      ),
+                      _PricePresetChip(
+                        label: '< 350k',
+                        selected: selectedPricePreset == _PricePreset.under350k,
+                        onTap: () => setModalState(
+                          () => selectedPricePreset = _PricePreset.under350k,
+                        ),
+                      ),
+                      _PricePresetChip(
+                        label: '350k - 550k',
+                        selected:
+                            selectedPricePreset == _PricePreset.between350k550k,
+                        onTap: () => setModalState(
+                          () => selectedPricePreset =
+                              _PricePreset.between350k550k,
+                        ),
+                      ),
+                      _PricePresetChip(
+                        label: '550k - 800k',
+                        selected:
+                            selectedPricePreset == _PricePreset.between550k800k,
+                        onTap: () => setModalState(
+                          () => selectedPricePreset =
+                              _PricePreset.between550k800k,
+                        ),
+                      ),
+                      _PricePresetChip(
+                        label: '> 800k',
+                        selected: selectedPricePreset == _PricePreset.over800k,
+                        onTap: () => setModalState(
+                          () => selectedPricePreset = _PricePreset.over800k,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
@@ -446,6 +506,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             setModalState(() {
                               selectedTypes.clear();
                               selectedAmenities.clear();
+                              selectedPricePreset = _PricePreset.any;
                             });
                           },
                           child: const Text('Reset'),
@@ -472,6 +533,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       controller.setDistrict(districtController.text.trim());
       controller.setTypes(selectedTypes.toList(growable: false));
       controller.setAmenities(selectedAmenities.toList(growable: false));
+      final range = _priceRangeByPreset(selectedPricePreset);
+      controller.setPriceRange(
+        minPriceUzs: range.$1,
+        maxPriceUzs: range.$2,
+      );
       controller.search();
     }
     districtController.dispose();
@@ -487,6 +553,105 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       }
       controller.search();
     });
+  }
+}
+
+String _priceLabel(int? min, int? max) {
+  if (min == null && max == null) {
+    return 'Any price';
+  }
+  if (min == null && max != null) {
+    return '< ${_compactPrice(max)}';
+  }
+  if (min != null && max == null) {
+    return '> ${_compactPrice(min)}';
+  }
+  return '${_compactPrice(min!)} - ${_compactPrice(max!)}';
+}
+
+String _compactPrice(int value) {
+  if (value >= 1000000) {
+    return '${(value / 1000000).toStringAsFixed(1)}m';
+  }
+  return '${(value / 1000).round()}k';
+}
+
+enum _PricePreset {
+  any,
+  under350k,
+  between350k550k,
+  between550k800k,
+  over800k,
+}
+
+_PricePreset _selectedPricePreset({int? min, int? max}) {
+  if (min == null && max == null) {
+    return _PricePreset.any;
+  }
+  if (min == null && max == 350000) {
+    return _PricePreset.under350k;
+  }
+  if (min == 350000 && max == 550000) {
+    return _PricePreset.between350k550k;
+  }
+  if (min == 550000 && max == 800000) {
+    return _PricePreset.between550k800k;
+  }
+  if (min == 800000 && max == null) {
+    return _PricePreset.over800k;
+  }
+  return _PricePreset.any;
+}
+
+(int?, int?) _priceRangeByPreset(_PricePreset preset) {
+  switch (preset) {
+    case _PricePreset.any:
+      return (null, null);
+    case _PricePreset.under350k:
+      return (null, 350000);
+    case _PricePreset.between350k550k:
+      return (350000, 550000);
+    case _PricePreset.between550k800k:
+      return (550000, 800000);
+    case _PricePreset.over800k:
+      return (800000, null);
+  }
+}
+
+class _PricePresetChip extends StatelessWidget {
+  const _PricePresetChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0x1A1A5EFF) : const Color(0xFFF2F4F8),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? const Color(0xFF1A5EFF) : const Color(0xFFDCE3EF),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? const Color(0xFF1A5EFF) : const Color(0xFF4E566B),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -598,6 +763,12 @@ class _SearchListingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = listing.imageUrls.isEmpty ? null : listing.imageUrls.first;
+    final rating = _mockRatingFor(listing.id);
+    final reviewsCount = _mockReviewCountFor(listing.id);
+    final priceLabel = listing.nightlyPriceUzs == null
+        ? 'Free stay'
+        : '${_formatUzs(listing.nightlyPriceUzs!)} UZS';
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
@@ -616,6 +787,28 @@ class _SearchListingTile extends StatelessWidget {
                 AspectRatio(
                   aspectRatio: 1.55,
                   child: _ListingImage(imageUrl: imageUrl, listing: listing),
+                ),
+                Positioned(
+                  left: 12,
+                  top: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xEFFFFFFF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _listingTypeLabel(listing.type),
+                      style: const TextStyle(
+                        color: Color(0xFF253251),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
                 ),
                 Positioned(
                   right: 12,
@@ -649,6 +842,46 @@ class _SearchListingTile extends StatelessWidget {
                 children: [
                   Row(
                     children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F2F7B),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '$reviewsCount reviews',
+                        style: const TextStyle(
+                          color: Color(0xFF5E6678),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (listing.amenities.contains(ListingAmenity.instantConfirm))
+                        const Text(
+                          'Instant',
+                          style: TextStyle(
+                            color: Color(0xFF1A5EFF),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Expanded(
                         child: Text(
                           listing.title,
@@ -662,9 +895,7 @@ class _SearchListingTile extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        listing.nightlyPriceUzs == null
-                            ? 'Free'
-                            : '${listing.nightlyPriceUzs} UZS',
+                        priceLabel,
                         style: const TextStyle(
                           color: Color(0xFF6A480A),
                           fontSize: 16,
@@ -682,11 +913,53 @@ class _SearchListingTile extends StatelessWidget {
                     '${listing.district}, ${listing.city}',
                     style: const TextStyle(color: Color(0xFF4E5568)),
                   ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      ...listing.amenities
+                          .take(4)
+                          .map((amenity) => _AmenityTiny(amenity: amenity)),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AmenityTiny extends StatelessWidget {
+  const _AmenityTiny({required this.amenity});
+
+  final ListingAmenity amenity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F5FB),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_amenityIcon(amenity), size: 12, color: const Color(0xFF4E5568)),
+          const SizedBox(width: 4),
+          Text(
+            _amenityTinyLabel(amenity),
+            style: const TextStyle(
+              color: Color(0xFF4E5568),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -747,6 +1020,87 @@ class _ListingImage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+double _mockRatingFor(String listingId) {
+  final hash = listingId.codeUnits.fold<int>(0, (acc, e) => acc + e);
+  final normalized = (hash % 13) / 10.0;
+  return (4.0 + normalized).clamp(4.1, 4.9);
+}
+
+int _mockReviewCountFor(String listingId) {
+  final hash = listingId.codeUnits.fold<int>(0, (acc, e) => acc + e);
+  return 12 + (hash % 70);
+}
+
+String _formatUzs(int value) {
+  final raw = value.toString();
+  final out = StringBuffer();
+  for (var i = 0; i < raw.length; i++) {
+    out.write(raw[i]);
+    final remain = raw.length - i - 1;
+    if (remain > 0 && remain % 3 == 0) {
+      out.write(' ');
+    }
+  }
+  return out.toString();
+}
+
+String _listingTypeLabel(ListingType type) {
+  switch (type) {
+    case ListingType.apartment:
+      return 'Apartment';
+    case ListingType.room:
+      return 'Room';
+    case ListingType.homePart:
+      return 'Home Part';
+    case ListingType.freeStay:
+      return 'Free Stay';
+  }
+}
+
+IconData _amenityIcon(ListingAmenity amenity) {
+  switch (amenity) {
+    case ListingAmenity.wifi:
+      return Icons.wifi;
+    case ListingAmenity.airConditioner:
+      return Icons.ac_unit;
+    case ListingAmenity.kitchen:
+      return Icons.kitchen_outlined;
+    case ListingAmenity.washingMachine:
+      return Icons.local_laundry_service_outlined;
+    case ListingAmenity.parking:
+      return Icons.local_parking_outlined;
+    case ListingAmenity.privateBathroom:
+      return Icons.bathtub_outlined;
+    case ListingAmenity.kidsAllowed:
+      return Icons.child_care_outlined;
+    case ListingAmenity.petsAllowed:
+      return Icons.pets_outlined;
+    case ListingAmenity.womenOnly:
+      return Icons.female_outlined;
+    case ListingAmenity.menOnly:
+      return Icons.male_outlined;
+    case ListingAmenity.hostLivesTogether:
+      return Icons.people_alt_outlined;
+    case ListingAmenity.instantConfirm:
+      return Icons.bolt_outlined;
+  }
+}
+
+String _amenityTinyLabel(ListingAmenity amenity) {
+  switch (amenity) {
+    case ListingAmenity.airConditioner:
+      return 'AC';
+    case ListingAmenity.privateBathroom:
+      return 'Bath';
+    case ListingAmenity.hostLivesTogether:
+      return 'Host';
+    case ListingAmenity.instantConfirm:
+      return 'Instant';
+    default:
+      return _amenityLabel(amenity);
   }
 }
 

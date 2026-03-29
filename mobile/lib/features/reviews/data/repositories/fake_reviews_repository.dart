@@ -24,6 +24,36 @@ class FakeReviewsRepository implements ReviewsRepository {
       comment: 'Comfortable stay, metro is really close.',
       createdAt: DateTime(2026, 2, 14),
     ),
+    Review(
+      id: 'seed_review_3',
+      bookingId: 'seed_completed_3',
+      listingId: 'l2',
+      reviewerUserId: 'guest_demo_4',
+      hostUserId: 'h2',
+      rating: 5,
+      comment: 'Very safe and quiet place. Host was very kind.',
+      createdAt: DateTime(2026, 1, 30),
+    ),
+    Review(
+      id: 'seed_review_4',
+      bookingId: 'seed_completed_4',
+      listingId: 'l4',
+      reviewerUserId: 'guest_demo_5',
+      hostUserId: 'h4',
+      rating: 5,
+      comment: 'Looks exactly like photos, stylish and clean.',
+      createdAt: DateTime(2026, 2, 19),
+    ),
+    Review(
+      id: 'seed_review_5',
+      bookingId: 'seed_completed_5',
+      listingId: 'l5',
+      reviewerUserId: 'guest_demo_6',
+      hostUserId: 'h5',
+      rating: 4,
+      comment: 'Great for family stay, kitchen had everything needed.',
+      createdAt: DateTime(2026, 2, 25),
+    ),
   ];
 
   @override

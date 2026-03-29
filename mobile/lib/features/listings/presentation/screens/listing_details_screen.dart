@@ -209,6 +209,22 @@ class ListingDetailsScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 14),
                                 const Text(
+                                  'Amenities',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1F2430),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: listing.amenities
+                                      .map((amenity) => _AmenityChip(amenity: amenity))
+                                      .toList(growable: false),
+                                ),
+                                const SizedBox(height: 14),
+                                const Text(
                                   'Reviews',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
@@ -270,6 +286,50 @@ class ListingDetailsScreen extends ConsumerWidget {
                             .fadeIn(duration: 240.ms)
                             .slideY(begin: 0.06, end: 0),
                       ],
+                      const SizedBox(height: 14),
+                      _InfoPanel(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Location & Transit',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1F2430),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            if (listing.landmark != null &&
+                                listing.landmark!.trim().isNotEmpty)
+                              _MetaRow(
+                                icon: Icons.place_outlined,
+                                label: 'Landmark',
+                                value: listing.landmark!,
+                              ),
+                            if (listing.metro != null &&
+                                listing.metro!.trim().isNotEmpty)
+                              _MetaRow(
+                                icon: Icons.subway_outlined,
+                                label: 'Metro',
+                                value: listing.metro!,
+                              ),
+                            if ((listing.landmark == null ||
+                                    listing.landmark!.trim().isEmpty) &&
+                                (listing.metro == null ||
+                                    listing.metro!.trim().isEmpty))
+                              const Text(
+                                'Host did not add landmark/metro details yet.',
+                                style: TextStyle(color: Color(0xFF6D7280)),
+                              ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              onPressed: () => context.push(RouteNames.searchMap),
+                              icon: const Icon(Icons.map_outlined),
+                              label: const Text('Open on map'),
+                            ),
+                          ],
+                        ),
+                      ).animate(delay: 210.ms).fadeIn(duration: 240.ms),
                     ],
                   ),
                 ),
@@ -537,5 +597,134 @@ class _ReviewsBlock extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+class _AmenityChip extends StatelessWidget {
+  const _AmenityChip({required this.amenity});
+
+  final ListingAmenity amenity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F6FB),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFDCE2EE)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_amenityIcon(amenity), size: 14, color: const Color(0xFF43506D)),
+          const SizedBox(width: 6),
+          Text(
+            _amenityLabel(amenity),
+            style: const TextStyle(
+              color: Color(0xFF2A3040),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF56627E)),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              color: Color(0xFF56627E),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Color(0xFF1F2430)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _amenityLabel(ListingAmenity amenity) {
+  switch (amenity) {
+    case ListingAmenity.wifi:
+      return 'Wi-Fi';
+    case ListingAmenity.airConditioner:
+      return 'Air conditioner';
+    case ListingAmenity.kitchen:
+      return 'Kitchen';
+    case ListingAmenity.washingMachine:
+      return 'Washing machine';
+    case ListingAmenity.parking:
+      return 'Parking';
+    case ListingAmenity.privateBathroom:
+      return 'Private bathroom';
+    case ListingAmenity.kidsAllowed:
+      return 'Kids allowed';
+    case ListingAmenity.petsAllowed:
+      return 'Pets allowed';
+    case ListingAmenity.womenOnly:
+      return 'Women only';
+    case ListingAmenity.menOnly:
+      return 'Men only';
+    case ListingAmenity.hostLivesTogether:
+      return 'Host lives together';
+    case ListingAmenity.instantConfirm:
+      return 'Instant confirm';
+  }
+}
+
+IconData _amenityIcon(ListingAmenity amenity) {
+  switch (amenity) {
+    case ListingAmenity.wifi:
+      return Icons.wifi;
+    case ListingAmenity.airConditioner:
+      return Icons.ac_unit;
+    case ListingAmenity.kitchen:
+      return Icons.kitchen_outlined;
+    case ListingAmenity.washingMachine:
+      return Icons.local_laundry_service_outlined;
+    case ListingAmenity.parking:
+      return Icons.local_parking_outlined;
+    case ListingAmenity.privateBathroom:
+      return Icons.bathtub_outlined;
+    case ListingAmenity.kidsAllowed:
+      return Icons.child_care_outlined;
+    case ListingAmenity.petsAllowed:
+      return Icons.pets_outlined;
+    case ListingAmenity.womenOnly:
+      return Icons.female_outlined;
+    case ListingAmenity.menOnly:
+      return Icons.male_outlined;
+    case ListingAmenity.hostLivesTogether:
+      return Icons.people_alt_outlined;
+    case ListingAmenity.instantConfirm:
+      return Icons.bolt_outlined;
   }
 }
