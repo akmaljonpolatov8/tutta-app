@@ -1,0 +1,138 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
+
+import '../../../../app/router/route_names.dart';
+import '../../application/search_controller.dart';
+import '../../domain/models/listing.dart';
+
+class SearchMapScreen extends ConsumerWidget {
+  const SearchMapScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(searchControllerProvider).items;
+    final mapObjects = items.indexed
+        .map((entry) => _toPlacemark(context, entry.$1, entry.$2))
+        .toList(growable: false);
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.search),
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: const Text('Map View'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            height: 260,
+            width: double.infinity,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFDDE6F5)),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: YandexMap(
+              mapObjects: mapObjects,
+              mode2DEnabled: true,
+              zoomGesturesEnabled: true,
+              rotateGesturesEnabled: true,
+              tiltGesturesEnabled: false,
+              onMapCreated: (controller) => _onMapCreated(controller, items),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 2),
+            child: Text(
+              'Map uses Yandex MapKit. For full tiles/production use, set API key in native Android/iOS configs.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF6C7892)),
+            ),
+          ),
+          Expanded(
+            child: items.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No listings to show on map for current filters.',
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return ListTile(
+                        leading: const Icon(Icons.place_outlined),
+                        title: Text(item.title),
+                        subtitle: Text('${item.city}, ${item.district}'),
+                        onTap: () => context.push(
+                          '${RouteNames.listingDetails}/${item.id}',
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+PlacemarkMapObject _toPlacemark(BuildContext context, int index, Listing item) {
+  final base = _cityCenter(item.city);
+  final offset = (index % 5) * 0.0035;
+  final point = Point(
+    latitude: base.latitude + offset,
+    longitude: base.longitude - offset,
+  );
+  return PlacemarkMapObject(
+    mapId: MapObjectId('listing_${item.id}'),
+    point: point,
+    opacity: 0.95,
+    consumeTapEvents: true,
+    onTap: (_, _) {
+      context.push('${RouteNames.listingDetails}/${item.id}');
+    },
+  );
+}
+
+Future<void> _onMapCreated(
+  YandexMapController controller,
+  List<Listing> items,
+) async {
+  final point = items.isEmpty
+      ? const Point(latitude: 41.3111, longitude: 69.2797)
+      : _cityCenter(items.first.city);
+
+  await controller.moveCamera(
+    CameraUpdate.newCameraPosition(CameraPosition(target: point, zoom: 11.0)),
+  );
+}
+
+Point _cityCenter(String city) {
+  switch (city.trim().toLowerCase()) {
+    case 'samarkand':
+      return const Point(latitude: 39.6542, longitude: 66.9597);
+    case 'bukhara':
+      return const Point(latitude: 39.7670, longitude: 64.4550);
+    case 'namangan':
+      return const Point(latitude: 41.0011, longitude: 71.6726);
+    case 'andijan':
+      return const Point(latitude: 40.7821, longitude: 72.3442);
+    case 'fergana':
+      return const Point(latitude: 40.3894, longitude: 71.7874);
+    case 'nukus':
+      return const Point(latitude: 42.4531, longitude: 59.6103);
+    case 'karshi':
+      return const Point(latitude: 38.8606, longitude: 65.7891);
+    case 'urgench':
+      return const Point(latitude: 41.5500, longitude: 60.6333);
+    case 'tashkent':
+    default:
+      return const Point(latitude: 41.3111, longitude: 69.2797);
+  }
+}
