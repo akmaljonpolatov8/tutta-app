@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-import dj_database_url
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,25 +12,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'replace-this-with-a-strong-secret-key-at-l
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
-RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'.split(',')
-    if origin.strip()
-]
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'.split(',')
-    if origin.strip()
-]
-CORS_EXTRA = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
-CORS_ALLOWED_ORIGINS = list(CORS_ALLOWED_ORIGINS) + CORS_EXTRA
-
-CSRF_EXTRA = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
-CSRF_TRUSTED_ORIGINS = list(CSRF_TRUSTED_ORIGINS) + CSRF_EXTRA
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173').split(',') if origin.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173').split(',') if origin.strip()]
 CORS_ALLOWED_ORIGIN_REGEXES = []
 
 if os.getenv('CORS_ALLOW_LOCALHOST_ANY_PORT', 'True').lower() == 'true':
@@ -72,7 +54,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -119,10 +100,6 @@ if os.getenv('USE_SQLITE', 'False').lower() == 'true':
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-if DATABASE_URL:
-    DATABASES['default'] = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -135,9 +112,8 @@ TIME_ZONE = os.getenv('TIME_ZONE', 'UTC')
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
