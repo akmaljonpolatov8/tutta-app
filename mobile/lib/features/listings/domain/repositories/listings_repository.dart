@@ -26,6 +26,8 @@ abstract interface class ListingsRepository {
     required CreateListingInput input,
   });
 
+  Future<void> deleteListing(String listingId);
+
   Future<List<AvailabilityDay>> getAvailability(String listingId);
 
   Future<List<AvailabilityDay>> upsertAvailability({

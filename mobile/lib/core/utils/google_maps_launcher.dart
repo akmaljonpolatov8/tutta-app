@@ -17,7 +17,7 @@ Future<bool> openGoogleMaps({
     <String, String>{
       'api': '1',
       'query': hasCoordinates
-          ? '${latitude!.toStringAsFixed(6)},${longitude!.toStringAsFixed(6)}'
+          ? '${latitude.toStringAsFixed(6)},${longitude.toStringAsFixed(6)}'
           : normalized,
     },
   );

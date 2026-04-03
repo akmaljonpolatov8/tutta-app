@@ -470,6 +470,12 @@ class FakeListingsRepository implements ListingsRepository {
   }
 
   @override
+  Future<void> deleteListing(String listingId) async {
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    _createdListings.removeWhere((item) => item.id == listingId);
+  }
+
+  @override
   Future<List<AvailabilityDay>> getAvailability(String listingId) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     final data = _availabilityByListing[listingId];

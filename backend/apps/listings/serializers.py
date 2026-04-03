@@ -1,4 +1,7 @@
+import json
+
 from rest_framework import serializers
+from urllib.parse import unquote, urlparse
 
 from .models import AvailabilityDay, Listing, ListingImage
 
@@ -269,7 +272,9 @@ class ListingCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         image_files = validated_data.pop('image_files', [])
         remove_image_ids = validated_data.pop('remove_image_ids', [])
-        remove_image_urls = validated_data.pop('remove_image_urls', [])
+        remove_image_urls = self._resolve_remove_image_urls(
+            validated_data.pop('remove_image_urls', [])
+        )
 
         review_fields = {
             'title',
@@ -308,9 +313,13 @@ class ListingCreateSerializer(serializers.ModelSerializer):
                 raw = (value or '').strip()
                 if not raw:
                     continue
-                if '/media/' in raw:
-                    raw = raw.split('/media/', 1)[1]
-                normalized_urls.append(raw.lstrip('/'))
+                parsed = urlparse(raw)
+                path = parsed.path or raw
+                if '/media/' in path:
+                    path = path.split('/media/', 1)[1]
+                normalized = unquote(path).lstrip('/')
+                if normalized:
+                    normalized_urls.append(normalized)
             if normalized_urls:
                 ListingImage.objects.filter(listing=instance, image__in=normalized_urls).delete()
 
@@ -318,6 +327,52 @@ class ListingCreateSerializer(serializers.ModelSerializer):
             ListingImage.objects.create(listing=instance, image=image)
 
         return instance
+
+    def _resolve_remove_image_urls(self, raw_values):
+        values = []
+
+        def add_candidate(value):
+            if value is None:
+                return
+            if isinstance(value, (list, tuple)):
+                for item in value:
+                    add_candidate(item)
+                return
+            if isinstance(value, str):
+                text = value.strip()
+                if not text:
+                    return
+                if text.startswith('[') and text.endswith(']'):
+                    try:
+                        parsed = json.loads(text)
+                    except (TypeError, ValueError, json.JSONDecodeError):
+                        values.append(text)
+                    else:
+                        add_candidate(parsed)
+                    return
+                values.append(text)
+                return
+            values.append(str(value).strip())
+
+        add_candidate(raw_values)
+
+        request_data = getattr(self.context.get('request'), 'data', None)
+        if request_data is not None and hasattr(request_data, 'getlist'):
+            add_candidate(request_data.getlist('remove_image_urls'))
+            add_candidate(request_data.getlist('remove_image_urls[]'))
+            for key in request_data.keys():
+                if key.startswith('remove_image_urls['):
+                    add_candidate(request_data.getlist(key))
+
+        if values and all(len(item) == 1 for item in values):
+            combined = ''.join(values).strip()
+            values = [combined] if combined else []
+
+        deduped = []
+        for value in values:
+            if value and value not in deduped:
+                deduped.append(value)
+        return deduped
 
     def to_representation(self, instance):
         return ListingSerializer(instance, context=self.context).data

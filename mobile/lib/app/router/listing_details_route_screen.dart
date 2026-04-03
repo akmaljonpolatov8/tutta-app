@@ -14,6 +14,7 @@ import '../../features/reviews/domain/models/review.dart';
 import '../../features/wishlist/application/favorites_controller.dart';
 import '../../features/listings/application/search_controller.dart';
 import '../../features/listings/domain/models/listing.dart';
+import '../../features/listings/domain/models/example_listings.dart';
 
 enum _ReviewSort { newest, popular }
 
@@ -29,13 +30,29 @@ class ListingDetailsScreen extends ConsumerStatefulWidget {
 
 class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
   late final Future<Listing?> _future;
+  final PageController _imagePageController = PageController();
   int _selectedImageIndex = 0;
   _ReviewSort _reviewSort = _ReviewSort.newest;
 
   @override
   void initState() {
     super.initState();
-    _future = ref.read(listingsRepositoryProvider).getById(widget.listingId);
+    _future = _loadListing();
+  }
+
+  @override
+  void dispose() {
+    _imagePageController.dispose();
+    super.dispose();
+  }
+
+  Future<Listing?> _loadListing() async {
+    final repository = ref.read(listingsRepositoryProvider);
+    final remote = await repository.getById(widget.listingId);
+    if (remote != null) {
+      return remote;
+    }
+    return findExampleListingById(widget.listingId);
   }
 
   @override
@@ -87,9 +104,12 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
             ?.user
             ?.id;
         final images = listing.imageUrls;
+        final safeSelectedImageIndex = images.isEmpty
+            ? 0
+            : _selectedImageIndex.clamp(0, images.length - 1);
         final selectedImage = images.isEmpty
             ? null
-            : images[_selectedImageIndex.clamp(0, images.length - 1)];
+            : images[safeSelectedImageIndex];
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -118,11 +138,26 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
             children: [
               if (selectedImage != null) ...[
                 RepaintBoundary(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: AspectRatio(
-                      aspectRatio: 1.55,
-                      child: _ListingImage(imagePath: selectedImage),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(28),
+                      onTap: () =>
+                          _openImageGallery(images, safeSelectedImageIndex),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: AspectRatio(
+                          aspectRatio: 1.55,
+                          child: PageView.builder(
+                            controller: _imagePageController,
+                            itemCount: images.length,
+                            onPageChanged: (index) =>
+                                setState(() => _selectedImageIndex = index),
+                            itemBuilder: (context, index) =>
+                                _ListingImage(imagePath: images[index]),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -135,11 +170,14 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
                       itemCount: images.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
-                        final active = index == _selectedImageIndex;
+                        final active = index == safeSelectedImageIndex;
                         return InkWell(
                           borderRadius: BorderRadius.circular(18),
-                          onTap: () =>
-                              setState(() => _selectedImageIndex = index),
+                          onTap: () {
+                            setState(() => _selectedImageIndex = index);
+                            _imagePageController.jumpToPage(index);
+                            _openImageGallery(images, index);
+                          },
                           child: Container(
                             width: 92,
                             decoration: BoxDecoration(
@@ -667,6 +705,19 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
     }
   }
 
+  Future<void> _openImageGallery(List<String> images, int initialIndex) async {
+    if (images.isEmpty) {
+      return;
+    }
+    final safeInitial = initialIndex.clamp(0, images.length - 1);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            _ImageGalleryViewer(images: images, initialIndex: safeInitial),
+      ),
+    );
+  }
+
   void _goBack() {
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
@@ -1181,6 +1232,134 @@ class _ListingImage extends StatelessWidget {
           size: 36,
           color: AppColors.iconMuted,
         ),
+      ),
+    );
+  }
+}
+
+class _ImageGalleryViewer extends StatefulWidget {
+  const _ImageGalleryViewer({required this.images, required this.initialIndex});
+
+  final List<String> images;
+  final int initialIndex;
+
+  @override
+  State<_ImageGalleryViewer> createState() => _ImageGalleryViewerState();
+}
+
+class _ImageGalleryViewerState extends State<_ImageGalleryViewer> {
+  late final PageController _controller;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex.clamp(0, widget.images.length - 1);
+    _controller = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('${_index + 1} / ${widget.images.length}'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: widget.images.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (context, index) {
+                return _GalleryImage(imagePath: widget.images[index]);
+              },
+            ),
+          ),
+          if (widget.images.length > 1) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 84,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.images.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final active = index == _index;
+                  return GestureDetector(
+                    onTap: () => _controller.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOut,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 84,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: active ? Colors.white : Colors.white24,
+                          width: active ? 2 : 1,
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: _ListingImage(imagePath: widget.images[index]),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _GalleryImage extends StatelessWidget {
+  const _GalleryImage({required this.imagePath});
+
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageWidget = imagePath.startsWith('assets/')
+        ? Image.asset(
+            imagePath,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+          )
+        : Image.network(
+            imagePath,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+            loadingBuilder: (context, child, progress) => progress == null
+                ? child
+                : const Center(child: CircularProgressIndicator()),
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.image_not_supported_outlined,
+              size: 44,
+              color: Colors.white54,
+            ),
+          );
+
+    return Center(
+      child: InteractiveViewer(
+        panEnabled: false,
+        minScale: 1,
+        maxScale: 4,
+        child: imageWidget,
       ),
     );
   }

@@ -1,8 +1,9 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
+from urllib.parse import quote
 
-from apps.listings.models import AvailabilityDay
+from apps.listings.models import AvailabilityDay, ListingImage
 from apps.users.models import User
 
 
@@ -266,3 +267,97 @@ class ListingApiTests(APITestCase):
         guest_get = self.client.get(f'/api/listings/{listing_id}/availability')
         self.assertEqual(guest_get.status_code, status.HTTP_200_OK)
         self.assertEqual(len(guest_get.data['results']), 2)
+
+    def test_update_can_remove_image_by_encoded_url(self):
+        self.client.force_authenticate(user=self.host)
+        image = SimpleUploadedFile(
+            'Без имени.png',
+            (
+                b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00'
+                b'\xff\xff\xff!\xf9\x04\x00\x00\x00\x00\x00,'
+                b'\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
+            ),
+            content_type='image/png',
+        )
+        create_response = self.client.post(
+            '/api/listings/',
+            {
+                'title': 'Image remove test',
+                'description': 'Should remove encoded image url',
+                'location': 'Tashkent, Yunusabad',
+                'city': 'Tashkent',
+                'district': 'Yunusabad',
+                'listing_type': 'home',
+                'price_per_night': '120.00',
+                'max_guests': 2,
+                'min_days': 1,
+                'max_days': 7,
+                'amenities': ['wifi'],
+                'image_files': [image],
+            },
+            format='multipart',
+        )
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        listing_id = create_response.data['id']
+        original_image_url = create_response.data['images'][0]['image']
+        encoded_image_url = quote(original_image_url, safe='/:%')
+
+        update_response = self.client.put(
+            f'/api/listings/{listing_id}/manage',
+            {
+                'title': 'Image remove test',
+                'description': 'Should remove encoded image url',
+                'city': 'Tashkent',
+                'district': 'Yunusabad',
+                'location': 'Tashkent, Yunusabad',
+                'listing_type': 'home',
+                'price_per_night': '120.00',
+                'max_guests': 2,
+                'min_days': 1,
+                'max_days': 7,
+                'amenities': ['wifi'],
+                'show_phone': 'false',
+                'free_stay_profile': '{}',
+                'remove_image_urls': [encoded_image_url],
+            },
+            format='multipart',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(ListingImage.objects.filter(listing_id=listing_id).count(), 0)
+
+        detail_response = self.client.get(f'/api/listings/{listing_id}')
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_response.data['images'], [])
+
+    def test_delete_listing_hides_it_from_host_and_public_lists(self):
+        self.client.force_authenticate(user=self.host)
+        create_response = self.client.post(
+            '/api/listings/',
+            {
+                'title': 'Delete listing test',
+                'description': 'Should disappear from list after delete',
+                'location': 'Tashkent, Yakkasaray',
+                'city': 'Tashkent',
+                'district': 'Yakkasaray',
+                'listing_type': 'home',
+                'price_per_night': '100.00',
+                'max_guests': 2,
+                'min_days': 1,
+                'max_days': 7,
+            },
+            format='json',
+        )
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        listing_id = create_response.data['id']
+
+        delete_response = self.client.delete(f'/api/listings/{listing_id}/manage')
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+        mine_response = self.client.get('/api/listings/?mine=true')
+        self.assertEqual(mine_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(mine_response.data['count'], 0)
+
+        self.client.force_authenticate(user=None)
+        public_response = self.client.get('/api/listings/')
+        self.assertEqual(public_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(public_response.data['count'], 0)

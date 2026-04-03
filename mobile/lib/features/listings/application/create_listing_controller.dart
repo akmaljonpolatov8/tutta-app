@@ -18,7 +18,10 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       final created = await _read
           .read(listingsRepositoryProvider)
           .createListing(input);
-      final canonicalListing = await _loadCanonicalListing(created);
+      final canonicalListing = await _loadCanonicalListing(
+        created,
+        allowImageFallback: input.imageFiles.isNotEmpty,
+      );
       _upsertLocalListing(canonicalListing);
       _setPostMutationSyncState(
         listing: canonicalListing,
@@ -29,8 +32,8 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       _refreshAfterMutation(
         canonicalListing.id,
         fallbackListing: canonicalListing,
-        keepWarning: input.imageFiles.isNotEmpty &&
-            canonicalListing.imageUrls.isEmpty,
+        keepWarning:
+            input.imageFiles.isNotEmpty && canonicalListing.imageUrls.isEmpty,
       );
       state = const AsyncValue.data(null);
       return canonicalListing;
@@ -54,7 +57,11 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       final updated = await _read
           .read(listingsRepositoryProvider)
           .updateListing(listingId: listingId, input: input);
-      final canonicalListing = await _loadCanonicalListing(updated);
+      final canonicalListing = await _loadCanonicalListing(
+        updated,
+        allowImageFallback:
+            input.imageFiles.isNotEmpty && input.removeImageUrls.isEmpty,
+      );
       _upsertLocalListing(canonicalListing);
       _setPostMutationSyncState(
         listing: canonicalListing,
@@ -65,8 +72,8 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       _refreshAfterMutation(
         canonicalListing.id,
         fallbackListing: canonicalListing,
-        keepWarning: input.imageFiles.isNotEmpty &&
-            canonicalListing.imageUrls.isEmpty,
+        keepWarning:
+            input.imageFiles.isNotEmpty && canonicalListing.imageUrls.isEmpty,
       );
       state = const AsyncValue.data(null);
       return canonicalListing;
@@ -80,19 +87,43 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<Listing> _loadCanonicalListing(Listing initialListing) async {
+  Future<void> delete(String listingId) async {
+    state = const AsyncValue.loading();
+
+    try {
+      await _read.read(listingsRepositoryProvider).deleteListing(listingId);
+      _removeLocalListing(listingId);
+      _read.read(hostListingsSyncInfoProvider.notifier).state =
+          const HostListingsSyncInfo.ok();
+      _read.invalidate(hostOwnedListingsProvider);
+      _read.invalidate(searchControllerProvider);
+      state = const AsyncValue.data(null);
+    } on AppException catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    } catch (error, stackTrace) {
+      final wrapped = AppException(error.toString());
+      state = AsyncValue.error(wrapped, stackTrace);
+      throw wrapped;
+    }
+  }
+
+  Future<Listing> _loadCanonicalListing(
+    Listing initialListing, {
+    required bool allowImageFallback,
+  }) async {
     final listingId = initialListing.id.trim();
     if (listingId.isEmpty) {
-      throw const AppException(
-        'The server returned an invalid listing id.',
-      );
+      throw const AppException('The server returned an invalid listing id.');
     }
 
     final canonicalListing = await _read
         .read(listingsRepositoryProvider)
         .getById(listingId);
 
-    final resolvedListing = canonicalListing != null &&
+    final resolvedListing =
+        allowImageFallback &&
+            canonicalListing != null &&
             canonicalListing.imageUrls.isEmpty &&
             initialListing.imageUrls.isNotEmpty
         ? canonicalListing.copyWith(imageUrls: initialListing.imageUrls)
@@ -116,6 +147,13 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
     _read.read(locallyCreatedHostListingsProvider.notifier).state = merged;
   }
 
+  void _removeLocalListing(String listingId) {
+    final current = _read.read(locallyCreatedHostListingsProvider);
+    _read.read(locallyCreatedHostListingsProvider.notifier).state = current
+        .where((item) => item.id != listingId)
+        .toList(growable: false);
+  }
+
   bool _isUsableListing(Listing? listing) {
     if (listing == null) {
       return false;
@@ -131,8 +169,9 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
     required bool hadSelectedImages,
   }) {
     if (hadSelectedImages && listing.imageUrls.isEmpty) {
-      _read.read(hostListingsSyncInfoProvider.notifier).state =
-          const HostListingsSyncInfo.warning(
+      _read
+          .read(hostListingsSyncInfoProvider.notifier)
+          .state = const HostListingsSyncInfo.warning(
         'Listing was saved, but the selected photos did not appear yet. Open Edit to upload them again.',
       );
       return;
@@ -155,12 +194,8 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       final hasListing = canonicalItems.any((item) => item.id == listingId);
       final currentLocal = _read.read(locallyCreatedHostListingsProvider);
       if (hasListing) {
-        _read
-            .read(locallyCreatedHostListingsProvider.notifier)
-            .state = mergeCreatedListings(
-          remote: canonicalItems,
-          local: currentLocal,
-        );
+        _read.read(locallyCreatedHostListingsProvider.notifier).state =
+            mergeCreatedListings(remote: canonicalItems, local: currentLocal);
         if (!keepWarning) {
           _read.read(hostListingsSyncInfoProvider.notifier).state =
               const HostListingsSyncInfo.ok();
@@ -177,7 +212,8 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
           ?.user
           ?.id;
       if (_isUsableListing(confirmedListing) &&
-          (currentUserId == null || confirmedListing!.hostId == currentUserId)) {
+          (currentUserId == null ||
+              confirmedListing!.hostId == currentUserId)) {
         _read
             .read(locallyCreatedHostListingsProvider.notifier)
             .state = mergeCreatedListings(
@@ -196,8 +232,9 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       _read.invalidate(searchControllerProvider);
     } on AppException catch (error) {
       _upsertLocalListing(fallbackListing);
-      _read.read(hostListingsSyncInfoProvider.notifier).state =
-          HostListingsSyncInfo.warning(
+      _read
+          .read(hostListingsSyncInfoProvider.notifier)
+          .state = HostListingsSyncInfo.warning(
         keepWarning
             ? 'Listing was saved, but photos may still need another upload. ${error.message}'
             : error.message,
@@ -206,8 +243,9 @@ class CreateListingController extends StateNotifier<AsyncValue<void>> {
       _read.invalidate(searchControllerProvider);
     } catch (error) {
       _upsertLocalListing(fallbackListing);
-      _read.read(hostListingsSyncInfoProvider.notifier).state =
-          HostListingsSyncInfo.warning(
+      _read
+          .read(hostListingsSyncInfoProvider.notifier)
+          .state = HostListingsSyncInfo.warning(
         keepWarning
             ? 'Listing was saved, but photos may still need another upload. $error'
             : error.toString(),

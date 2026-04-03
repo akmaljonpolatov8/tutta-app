@@ -150,6 +150,14 @@ class ApiListingsRepository implements ListingsRepository {
     );
   }
 
+  @override
+  Future<void> deleteListing(String listingId) async {
+    final result = await _apiClient.delete(
+      ApiEndpoints.listingManage(listingId),
+    );
+    result.when(success: (_) => null, failure: _throwFailure);
+  }
+
   List<Listing> _applyClientFilters(
     List<Listing> source, {
     required ListingSearchParams params,
@@ -234,7 +242,9 @@ class ApiListingsRepository implements ListingsRepository {
       input.district.trim(),
       if (mapCoordinates.isNotEmpty) mapCoordinates,
     ];
-    final composedLocation = locationParts.where((part) => part.isNotEmpty).join(', ');
+    final composedLocation = locationParts
+        .where((part) => part.isNotEmpty)
+        .join(', ');
     final normalizedLandmark = (input.landmark ?? '').trim();
 
     final data = <String, dynamic>{
@@ -279,11 +289,16 @@ class ApiListingsRepository implements ListingsRepository {
         }),
       );
     }
-    if (input.removeImageUrls.isNotEmpty) {
-      data['remove_image_urls'] = input.removeImageUrls;
+    final formData = FormData.fromMap(data);
+    for (final value in input.removeImageUrls) {
+      final normalized = value.trim();
+      if (normalized.isEmpty) {
+        continue;
+      }
+      formData.fields.add(MapEntry('remove_image_urls', normalized));
     }
 
-    return FormData.fromMap(data);
+    return formData;
   }
 
   Listing _mapListing(Map<String, dynamic> payload) {
@@ -486,7 +501,7 @@ class ApiListingsRepository implements ListingsRepository {
   }
 
   String _normalizeImageUrl(String raw) {
-    final value = raw.trim();
+    final value = _restoreEncodedPercents(raw.trim());
     if (value.isEmpty) {
       return '';
     }
@@ -501,15 +516,17 @@ class ApiListingsRepository implements ListingsRepository {
           localHosts.contains(uri.host) &&
           baseUri.hasPort &&
           localHosts.contains(baseUri.host)) {
-        return uri
-            .replace(
-              scheme: baseUri.scheme,
-              host: baseUri.host,
-              port: baseUri.port,
-            )
-            .toString();
+        return _encodeUrlIfNeeded(
+          uri
+              .replace(
+                scheme: baseUri.scheme,
+                host: baseUri.host,
+                port: baseUri.port,
+              )
+              .toString(),
+        );
       }
-      return value;
+      return _encodeUrlIfNeeded(value);
     }
 
     final base = _apiClient.baseUrl;
@@ -521,16 +538,32 @@ class ApiListingsRepository implements ListingsRepository {
       relativePath = '/$relativePath';
     }
     if (!relativePath.startsWith('/media/')) {
-      relativePath = '/media${relativePath.startsWith('/') ? '' : '/'}${relativePath.replaceFirst(RegExp(r'^/+'), '')}';
+      relativePath =
+          '/media${relativePath.startsWith('/') ? '' : '/'}${relativePath.replaceFirst(RegExp(r'^/+'), '')}';
       relativePath = '/${relativePath.replaceFirst(RegExp(r'^/+'), '')}';
     }
 
-    return '$origin$relativePath';
+    return _encodeUrlIfNeeded('$origin$relativePath');
+  }
+
+  String _restoreEncodedPercents(String value) {
+    if (!value.contains('%25')) {
+      return value;
+    }
+    return value.replaceAll('%25', '%');
+  }
+
+  String _encodeUrlIfNeeded(String value) {
+    if (value.contains('%')) {
+      return value;
+    }
+    return Uri.encodeFull(value);
   }
 
   (double, double)? _parseCoordinates(String value) {
-    final match = RegExp(r'^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$')
-        .firstMatch(value);
+    final match = RegExp(
+      r'^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$',
+    ).firstMatch(value);
     if (match == null) {
       return null;
     }
@@ -569,6 +602,21 @@ class ApiListingsRepository implements ListingsRepository {
     if (lower.endsWith('.gif')) {
       return MediaType('image', 'gif');
     }
+    if (lower.endsWith('.bmp')) {
+      return MediaType('image', 'bmp');
+    }
+    if (lower.endsWith('.avif')) {
+      return MediaType('image', 'avif');
+    }
+    if (lower.endsWith('.heic')) {
+      return MediaType('image', 'heic');
+    }
+    if (lower.endsWith('.heif')) {
+      return MediaType('image', 'heif');
+    }
+    if (lower.endsWith('.tif') || lower.endsWith('.tiff')) {
+      return MediaType('image', 'tiff');
+    }
     return MediaType('image', 'jpeg');
   }
 
@@ -584,7 +632,9 @@ class ApiListingsRepository implements ListingsRepository {
   }
 
   String? _extractCoordinatesFromLocation(String location) {
-    final match = RegExp(r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)').firstMatch(location);
+    final match = RegExp(
+      r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)',
+    ).firstMatch(location);
     if (match == null) {
       return null;
     }

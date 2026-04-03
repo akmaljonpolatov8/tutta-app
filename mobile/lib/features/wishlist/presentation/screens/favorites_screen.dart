@@ -6,6 +6,7 @@ import '../../../../app/app.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../listings/application/search_controller.dart';
+import '../../../listings/domain/models/example_listings.dart';
 import '../../../listings/domain/models/listing.dart';
 import '../../application/favorites_controller.dart';
 
@@ -16,7 +17,10 @@ class FavoritesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ids = ref.watch(favoritesIdsProvider).toList(growable: false);
     final listingsFuture = Future.wait(
-      ids.map((id) => ref.read(listingsRepositoryProvider).getById(id)),
+      ids.map((id) async {
+        final remote = await ref.read(listingsRepositoryProvider).getById(id);
+        return remote ?? findExampleListingById(id);
+      }),
     );
 
     return Scaffold(
@@ -169,22 +173,17 @@ class _FavoriteTile extends ConsumerWidget {
                   AspectRatio(
                     aspectRatio: 1.7,
                     child: imageUrl == null
-                        ? Container(
-                            color: const Color(0xFFECE4D7),
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.home_work_outlined,
-                              size: 34,
-                            ),
+                        ? _fallbackImage()
+                        : imageUrl.startsWith('assets/')
+                        ? Image.asset(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _fallbackImage(),
                           )
                         : Image.network(
                             imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              color: const Color(0xFFECE4D7),
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.broken_image_outlined),
-                            ),
+                            errorBuilder: (_, _, _) => _fallbackImage(),
                           ),
                   ),
                   Positioned(
@@ -385,6 +384,14 @@ class _FavoriteTile extends ConsumerWidget {
       ).showSnackBar(SnackBar(content: Text(loc.reviewThanks)));
     }
   }
+}
+
+Widget _fallbackImage() {
+  return Container(
+    color: const Color(0xFFECE4D7),
+    alignment: Alignment.center,
+    child: const Icon(Icons.home_work_outlined, size: 34),
+  );
 }
 
 class _FavoritesEmptyState extends StatelessWidget {

@@ -13,8 +13,10 @@ import '../../../auth/domain/models/auth_user.dart';
 import '../../../bookings/application/booking_request_controller.dart';
 import '../../../bookings/domain/models/booking.dart';
 import '../../../chat/presentation/screens/chat_list_screen.dart';
+import '../../../listings/application/create_listing_controller.dart';
 import '../../../listings/application/search_controller.dart';
 import '../../../listings/domain/models/listing.dart';
+import '../../../listings/domain/models/example_listings.dart';
 import '../../../listings/domain/models/listing_search_params.dart';
 import '../../../wishlist/application/favorites_controller.dart';
 import '../../application/app_session_controller.dart';
@@ -33,21 +35,75 @@ final _homeExploreListingsProvider = FutureProvider<List<Listing>>((ref) async {
     final items = await ref
         .watch(listingsRepositoryProvider)
         .search(params: params, hasPremium: hasPremium);
-    return mergeCreatedListings(remote: items, local: localItems)
+    final merged = mergeCreatedListings(remote: items, local: localItems)
+        .where(_isPresentableHomeListing)
         .where(
           (listing) =>
               matchesSearchParams(listing, params, hasPremium: hasPremium),
         )
         .toList(growable: false);
+    return _fillWithExamplesIfNeeded(
+      primary: merged,
+      params: params,
+      hasPremium: hasPremium,
+    );
   } on AppException {
-    return localItems
+    final localFiltered = localItems
+        .where(_isPresentableHomeListing)
         .where(
           (listing) =>
               matchesSearchParams(listing, params, hasPremium: hasPremium),
         )
         .toList(growable: false);
+    return _fillWithExamplesIfNeeded(
+      primary: localFiltered,
+      params: params,
+      hasPremium: hasPremium,
+    );
   }
 });
+
+bool _isPresentableHomeListing(Listing listing) {
+  final title = listing.title.trim();
+  if (title.isEmpty || title.length < 3) {
+    return false;
+  }
+  if (title.toLowerCase() == 'm') {
+    return false;
+  }
+  if (listing.imageUrls.isEmpty) {
+    return false;
+  }
+  if (listing.type != ListingType.freeStay) {
+    final price = listing.nightlyPriceUzs ?? 0;
+    if (price < 10000) {
+      return false;
+    }
+  }
+  return true;
+}
+
+List<Listing> _fillWithExamplesIfNeeded({
+  required List<Listing> primary,
+  required ListingSearchParams params,
+  required bool hasPremium,
+  int minimumItems = 8,
+}) {
+  final seed = <String, Listing>{for (final item in primary) item.id: item};
+  if (seed.length >= minimumItems) {
+    return seed.values.toList(growable: false);
+  }
+  for (final example in kExampleListings) {
+    if (!matchesSearchParams(example, params, hasPremium: hasPremium)) {
+      continue;
+    }
+    seed.putIfAbsent(example.id, () => example);
+    if (seed.length >= minimumItems) {
+      break;
+    }
+  }
+  return seed.values.toList(growable: false);
+}
 
 final _homeFavoriteListingsProvider = FutureProvider<List<Listing>>((
   ref,
@@ -58,7 +114,12 @@ final _homeFavoriteListingsProvider = FutureProvider<List<Listing>>((
   }
 
   final repository = ref.watch(listingsRepositoryProvider);
-  final items = await Future.wait(favoriteIds.map(repository.getById));
+  final items = await Future.wait(
+    favoriteIds.map((id) async {
+      final remote = await repository.getById(id);
+      return remote ?? findExampleListingById(id);
+    }),
+  );
   return items.whereType<Listing>().toList(growable: false);
 });
 
@@ -1928,15 +1989,16 @@ class _ListingPreviewTile extends ConsumerWidget {
   }
 }
 
-class _HostListingTile extends StatelessWidget {
+class _HostListingTile extends ConsumerWidget {
   const _HostListingTile({required this.listing});
 
   final Listing listing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDraft = !listing.isActive;
     final hasUsableRoute = _hasUsableListingRoute(listing);
+    final isSubmitting = ref.watch(createListingControllerProvider).isLoading;
     final title = listing.title.trim().isEmpty
         ? _copy(
             context,
@@ -2062,10 +2124,11 @@ class _HostListingTile extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: hasUsableRoute
-                      ? () =>
-                          context.push(RouteNames.listingDetailsById(listing.id))
-                      : null,
+                  onPressed: isSubmitting || !hasUsableRoute
+                      ? null
+                      : () => context.push(
+                          RouteNames.listingDetailsById(listing.id),
+                        ),
                   icon: const Icon(Icons.open_in_new_rounded),
                   label: Text(
                     _copy(context, en: 'Open', ru: 'Открыть', uz: 'Ochish'),
@@ -2075,9 +2138,11 @@ class _HostListingTile extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: hasUsableRoute
-                      ? () => context.push(RouteNames.editListingById(listing.id))
-                      : null,
+                  onPressed: isSubmitting || !hasUsableRoute
+                      ? null
+                      : () => context.push(
+                          RouteNames.editListingById(listing.id),
+                        ),
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(
                     _copy(
@@ -2089,11 +2154,107 @@ class _HostListingTile extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 52,
+                height: 44,
+                child: OutlinedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => _confirmDeleteListing(context, ref, listing),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFB42318),
+                    side: const BorderSide(color: Color(0xFFFDA29B)),
+                    padding: EdgeInsets.zero,
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded, size: 20),
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteListing(
+    BuildContext context,
+    WidgetRef ref,
+    Listing listing,
+  ) async {
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          _copy(
+            dialogContext,
+            en: 'Delete listing?',
+            ru: 'Удалить объявление?',
+            uz: 'E\'lon o\'chirilsinmi?',
+          ),
+        ),
+        content: Text(
+          _copy(
+            dialogContext,
+            en: 'This action removes the listing from your host inventory and public search.',
+            ru: 'Объявление будет удалено из списка хоста и из публичного поиска.',
+            uz: 'E\'lon host ro\'yxatidan va ommaviy qidiruvdan olib tashlanadi.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(
+              _copy(dialogContext, en: 'Cancel', ru: 'Отмена', uz: 'Bekor'),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB42318),
+            ),
+            child: Text(
+              _copy(
+                dialogContext,
+                en: 'Delete',
+                ru: 'Удалить',
+                uz: 'O\'chirish',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (approved != true || !context.mounted) {
+      return;
+    }
+    try {
+      await ref
+          .read(createListingControllerProvider.notifier)
+          .delete(listing.id);
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _copy(
+              context,
+              en: 'Listing deleted.',
+              ru: 'Объявление удалено.',
+              uz: 'E\'lon o\'chirildi.',
+            ),
+          ),
+        ),
+      );
+    } on AppException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 }
 
@@ -2479,8 +2640,7 @@ String _listingLocation(Listing listing) {
 bool _hasUsableListingRoute(Listing listing) {
   return listing.id.trim().isNotEmpty &&
       listing.title.trim().isNotEmpty &&
-      listing.city.trim().isNotEmpty &&
-      listing.district.trim().isNotEmpty;
+      listing.city.trim().isNotEmpty;
 }
 
 String _copy(

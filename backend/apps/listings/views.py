@@ -7,6 +7,8 @@ from .models import AvailabilityDay, Listing
 from .permissions import IsHostUser, IsListingOwner
 from .serializers import AvailabilityDaySerializer, ListingCreateSerializer, ListingSerializer
 
+HOST_DELETED_NOTE = '__HOST_DELETED__'
+
 
 class ListingListCreateView(generics.ListCreateAPIView):
     queryset = Listing.objects.select_related('host').prefetch_related('images')
@@ -29,7 +31,7 @@ class ListingListCreateView(generics.ListCreateAPIView):
         return super().get_throttles()
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.exclude(moderation_note=HOST_DELETED_NOTE)
         user = self.request.user
         q = self.request.query_params.get('q')
         city = self.request.query_params.get('city')
@@ -93,6 +95,7 @@ class ListingListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         listing = serializer.save()
+        listing.refresh_from_db()
         response_serializer = ListingSerializer(
             listing,
             context=self.get_serializer_context(),
@@ -112,12 +115,13 @@ class ListingDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        public_queryset = self.queryset.filter(
+        base_queryset = self.queryset.exclude(moderation_note=HOST_DELETED_NOTE)
+        public_queryset = base_queryset.filter(
             is_active=True,
             moderation_status=Listing.ModerationStatus.APPROVED,
         )
         if user.is_authenticated:
-            return self.queryset.filter(
+            return base_queryset.filter(
                 Q(
                     is_active=True,
                     moderation_status=Listing.ModerationStatus.APPROVED,
@@ -134,10 +138,22 @@ class ListingManageView(generics.RetrieveUpdateDestroyAPIView):
     throttle_classes = [throttling.ScopedRateThrottle]
     throttle_scope = 'listings_write'
 
+    def get_queryset(self):
+        return self.queryset.exclude(moderation_note=HOST_DELETED_NOTE)
+
     def perform_destroy(self, instance):
         # Soft delete keeps booking/review history intact.
         instance.is_active = False
-        instance.save(update_fields=['is_active', 'updated_at'])
+        instance.moderation_status = Listing.ModerationStatus.REJECTED
+        instance.moderation_note = HOST_DELETED_NOTE
+        instance.save(
+            update_fields=[
+                'is_active',
+                'moderation_status',
+                'moderation_note',
+                'updated_at',
+            ]
+        )
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -149,6 +165,11 @@ class ListingManageView(generics.RetrieveUpdateDestroyAPIView):
         )
         serializer.is_valid(raise_exception=True)
         listing = serializer.save()
+        listing = (
+            Listing.objects.select_related('host')
+            .prefetch_related('images')
+            .get(pk=listing.pk)
+        )
         response_serializer = ListingSerializer(
             listing,
             context=self.get_serializer_context(),

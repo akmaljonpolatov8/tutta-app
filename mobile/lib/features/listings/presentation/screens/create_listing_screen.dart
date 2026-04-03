@@ -350,7 +350,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       return;
     }
 
-    final picked = await _imagePicker.pickMultiImage(imageQuality: 88);
+    final picked = await _imagePicker.pickMultiImage();
     if (picked.isEmpty) {
       return;
     }
@@ -1037,8 +1037,7 @@ class _CreateListingCopy {
           amenities: 'Удобства',
           amenitiesHint: 'Выберите то, что есть в жилье.',
           exactMapLocation: 'Точная локация',
-          exactMapLocationHint:
-              'Выберите точку на карте для Google Maps.',
+          exactMapLocationHint: 'Выберите точку на карте для Google Maps.',
           pickOnMap: 'Выбрать на карте',
         );
       case 'uz':

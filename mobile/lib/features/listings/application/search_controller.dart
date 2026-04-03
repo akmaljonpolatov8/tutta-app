@@ -7,6 +7,7 @@ import '../../../core/network/api_client.dart';
 import '../data/repositories/api_listings_repository.dart';
 import '../data/repositories/fake_listings_repository.dart';
 import '../domain/models/listing.dart';
+import '../domain/models/example_listings.dart';
 import '../domain/models/listing_search_params.dart';
 import '../domain/repositories/listings_repository.dart';
 
@@ -295,8 +296,19 @@ class SearchController extends StateNotifier<SearchState> {
                 matchesSearchParams(listing, params, hasPremium: hasPremium),
           )
           .toList(growable: false);
+      final fallbackExamples = kExampleListings
+          .where(
+            (listing) =>
+                matchesSearchParams(listing, params, hasPremium: hasPremium),
+          )
+          .toList(growable: false);
+      final effectiveItems = merged.isNotEmpty ? merged : fallbackExamples;
 
-      state = state.copyWith(items: merged, loading: false, clearError: true);
+      state = state.copyWith(
+        items: effectiveItems,
+        loading: false,
+        clearError: true,
+      );
     } on AppException catch (error) {
       final localItems = _read
           .read(locallyCreatedHostListingsProvider)
@@ -305,9 +317,21 @@ class SearchController extends StateNotifier<SearchState> {
                 matchesSearchParams(listing, params, hasPremium: hasPremium),
           )
           .toList(growable: false);
+      final fallbackExamples = kExampleListings
+          .where(
+            (listing) =>
+                matchesSearchParams(listing, params, hasPremium: hasPremium),
+          )
+          .toList(growable: false);
       if (localItems.isNotEmpty) {
         state = state.copyWith(
           items: localItems,
+          loading: false,
+          clearError: true,
+        );
+      } else if (fallbackExamples.isNotEmpty) {
+        state = state.copyWith(
+          items: fallbackExamples,
           loading: false,
           clearError: true,
         );
@@ -322,9 +346,21 @@ class SearchController extends StateNotifier<SearchState> {
                 matchesSearchParams(listing, params, hasPremium: hasPremium),
           )
           .toList(growable: false);
+      final fallbackExamples = kExampleListings
+          .where(
+            (listing) =>
+                matchesSearchParams(listing, params, hasPremium: hasPremium),
+          )
+          .toList(growable: false);
       if (localItems.isNotEmpty) {
         state = state.copyWith(
           items: localItems,
+          loading: false,
+          clearError: true,
+        );
+      } else if (fallbackExamples.isNotEmpty) {
+        state = state.copyWith(
+          items: fallbackExamples,
           loading: false,
           clearError: true,
         );

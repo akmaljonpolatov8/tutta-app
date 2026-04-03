@@ -102,32 +102,33 @@ void main() {
       expect(booking.isPaid, isTrue);
     });
 
-    test('bookings markCompleted hits complete endpoint and maps status', () async {
-      final client = _RecordingApiClient();
-      final repository = ApiBookingRepository(client);
+    test(
+      'bookings markCompleted hits complete endpoint and maps status',
+      () async {
+        final client = _RecordingApiClient();
+        final repository = ApiBookingRepository(client);
 
-      client.queuePost(
-        ApiSuccess(<String, dynamic>{
-          'detail': 'Booking completed.',
-        }),
-      );
-      client.queueGet(
-        ApiSuccess(<String, dynamic>{
-          'results': <Map<String, dynamic>>[
-            _bookingJson(id: 'b-3')..['status'] = 'completed',
-          ],
-        }),
-      );
+        client.queuePost(
+          ApiSuccess(<String, dynamic>{'detail': 'Booking completed.'}),
+        );
+        client.queueGet(
+          ApiSuccess(<String, dynamic>{
+            'results': <Map<String, dynamic>>[
+              _bookingJson(id: 'b-3')..['status'] = 'completed',
+            ],
+          }),
+        );
 
-      final booking = await repository.markCompleted(
-        bookingId: 'b-3',
-        hostUserId: 'host-1',
-      );
+        final booking = await repository.markCompleted(
+          bookingId: 'b-3',
+          hostUserId: 'host-1',
+        );
 
-      final call = client.postCalls.single;
-      expect(call.path, '/bookings/b-3/complete');
-      expect(booking.status.name, 'completed');
-    });
+        final call = client.postCalls.single;
+        expect(call.path, '/bookings/b-3/complete');
+        expect(booking.status.name, 'completed');
+      },
+    );
 
     test(
       'payments webhook sends idempotency headers and parses payload status',
@@ -222,6 +223,7 @@ void main() {
           city: 'Tashkent',
           district: 'Yunusabad',
           type: ListingType.homePart,
+          amenities: <ListingAmenity>[],
           nightlyPriceUzs: 500000,
           maxGuests: 3,
           minDays: 1,
@@ -232,8 +234,20 @@ void main() {
 
       final call = client.putCalls.single;
       expect(call.path, ApiEndpoints.listingManage('101'));
-      expect(call.data?['listing_type'], 'home');
-      expect(call.data?['max_days'], 10);
+      expect(call.data, isA<FormData>());
+      final formData = call.data as FormData;
+      expect(
+        formData.fields.any(
+          (field) => field.key == 'listing_type' && field.value == 'home',
+        ),
+        isTrue,
+      );
+      expect(
+        formData.fields.any(
+          (field) => field.key == 'max_days' && field.value == '10',
+        ),
+        isTrue,
+      );
       expect(listing.id, '101');
       expect(listing.city, 'Tashkent');
       expect(listing.district, 'Yunusabad');
@@ -268,7 +282,9 @@ void main() {
 
       final call = client.putCalls.single;
       expect(call.path, ApiEndpoints.listingAvailability('l-1'));
-      expect(call.data?['days'], isA<List<dynamic>>());
+      expect(call.data, isA<Map<String, dynamic>>());
+      final payload = call.data as Map<String, dynamic>;
+      expect(payload['days'], isA<List<dynamic>>());
       expect(result, hasLength(1));
       expect(result.first.isAvailable, isFalse);
     });
@@ -293,14 +309,10 @@ void main() {
         }),
       );
       client.queuePost(
-        ApiSuccess(<String, dynamic>{
-          'detail': 'Notification marked as read.',
-        }),
+        ApiSuccess(<String, dynamic>{'detail': 'Notification marked as read.'}),
       );
       client.queuePost(
-        ApiSuccess(<String, dynamic>{
-          'detail': 'Push device registered.',
-        }),
+        ApiSuccess(<String, dynamic>{'detail': 'Push device registered.'}),
       );
       client.queuePost(
         ApiSuccess(<String, dynamic>{
@@ -320,8 +332,14 @@ void main() {
 
       expect(client.getCalls.last.path, ApiEndpoints.notifications);
       expect(client.postCalls[0].path, ApiEndpoints.notificationMarkRead('91'));
-      expect(client.postCalls[1].path, ApiEndpoints.notificationsDeviceRegister());
-      expect(client.postCalls[2].path, ApiEndpoints.notificationsDeviceUnregister());
+      expect(
+        client.postCalls[1].path,
+        ApiEndpoints.notificationsDeviceRegister(),
+      );
+      expect(
+        client.postCalls[2].path,
+        ApiEndpoints.notificationsDeviceUnregister(),
+      );
       expect(items, hasLength(1));
       expect(items.first.id, '91');
       expect(items.first.isRead, isFalse);
@@ -396,7 +414,7 @@ class _RecordingApiClient extends ApiClient {
   @override
   Future<ApiResult<Map<String, dynamic>>> post(
     String path, {
-    Map<String, dynamic>? data,
+    Object? data,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
   }) async {
@@ -418,7 +436,7 @@ class _RecordingApiClient extends ApiClient {
   @override
   Future<ApiResult<Map<String, dynamic>>> put(
     String path, {
-    Map<String, dynamic>? data,
+    Object? data,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
   }) async {
@@ -447,7 +465,7 @@ class _RecordedCall {
   });
 
   final String path;
-  final Map<String, dynamic>? data;
+  final dynamic data;
   final Map<String, dynamic>? queryParameters;
   final Map<String, String>? headers;
 }

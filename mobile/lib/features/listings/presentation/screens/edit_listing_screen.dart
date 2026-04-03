@@ -314,12 +314,9 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                         (_mapCoordinates ?? '').trim().isEmpty
                             ? _editorText(
                                 context,
-                                en:
-                                    'Pick an exact point that guests can open in Google Maps.',
-                                ru:
-                                    'Выберите точку на карте для Google Maps.',
-                                uz:
-                                    'Google Maps uchun aniq nuqtani xaritada tanlang.',
+                                en: 'Pick an exact point that guests can open in Google Maps.',
+                                ru: 'Выберите точку на карте для Google Maps.',
+                                uz: 'Google Maps uchun aniq nuqtani xaritada tanlang.',
                               )
                             : _mapCoordinates!,
                         style: TextStyle(
@@ -556,9 +553,24 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
           ),
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: FilledButton(
-              onPressed: isSubmitting ? null : _save,
-              child: Text(isSubmitting ? 'Saving...' : 'Save changes'),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton(
+                  onPressed: isSubmitting ? null : _save,
+                  child: Text(isSubmitting ? 'Saving...' : 'Save changes'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: isSubmitting ? null : _deleteListing,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFB42318),
+                    side: const BorderSide(color: Color(0xFFFDA29B)),
+                  ),
+                  label: const Text('Delete listing'),
+                ),
+              ],
             ),
           ),
         );
@@ -649,6 +661,50 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
     context.go(RouteNames.listingDetailsById(updatedListing.id));
   }
 
+  Future<void> _deleteListing() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete listing?'),
+        content: const Text(
+          'This action removes the listing from your inventory and public search.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Color(0xFFB42318)),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    try {
+      await ref
+          .read(createListingControllerProvider.notifier)
+          .delete(widget.listingId);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Listing deleted.')));
+      context.go(RouteNames.home);
+    } on AppException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _show(error.message);
+    }
+  }
+
   List<String> _splitCsv(String value) {
     return value
         .split(',')
@@ -664,7 +720,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
   }
 
   Future<void> _pickImages() async {
-    final picked = await _imagePicker.pickMultiImage(imageQuality: 88);
+    final picked = await _imagePicker.pickMultiImage();
     if (picked.isEmpty) {
       return;
     }
@@ -686,9 +742,7 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
   }
 
   String? _extractCoordinates(String value) {
-    final match = RegExp(
-      r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)',
-    ).firstMatch(value);
+    final match = RegExp(r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)').firstMatch(value);
     if (match == null) {
       return null;
     }
