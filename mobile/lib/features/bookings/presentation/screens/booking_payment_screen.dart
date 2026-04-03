@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/route_names.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../application/booking_request_controller.dart';
 import '../../domain/models/booking.dart';
@@ -21,17 +22,40 @@ class BookingPaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
+  String _t({required String en, required String ru, required String uz}) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'ru':
+        return ru;
+      case 'uz':
+        return uz;
+      default:
+        return en;
+    }
+  }
+
   Future<void> _pay({
     required Booking booking,
     required PaymentMethod method,
   }) async {
     if (!booking.paymentRequired) {
-      _show('Payment is not required for this booking (Free Stay).');
+      _show(
+        _t(
+          en: 'Payment is not required for this booking (Free Stay).',
+          ru: 'Для этой брони оплата не требуется (Free Stay).',
+          uz: 'Ushbu bron uchun to‘lov talab qilinmaydi (Free Stay).',
+        ),
+      );
       return;
     }
 
     if (booking.isPaid) {
-      _show('This booking is already paid.');
+      _show(
+        _t(
+          en: 'This booking is already paid.',
+          ru: 'Эта бронь уже оплачена.',
+          uz: 'Bu bron allaqachon to‘langan.',
+        ),
+      );
       return;
     }
 
@@ -51,16 +75,30 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
       final state = ref.read(paymentControllerProvider);
       final url = state.intent?.checkoutUrl;
       if (url != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Checkout created: $url')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _t(
+                en: 'Checkout created: $url',
+                ru: 'Ссылка на оплату создана: $url',
+                uz: 'To‘lov havolasi yaratildi: $url',
+              ),
+            ),
+          ),
+        );
       }
 
       await _pollUntilResolved();
     } on AppException catch (error) {
       _show(error.message);
     } catch (_) {
-      _show('Could not start payment.');
+      _show(
+        _t(
+          en: 'Could not start payment.',
+          ru: 'Не удалось начать оплату.',
+          uz: 'To‘lovni boshlab bo‘lmadi.',
+        ),
+      );
     }
   }
 
@@ -74,16 +112,34 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
       }
 
       if (status == PaymentStatus.succeeded) {
-        _show('Payment succeeded. Booking is now paid.');
+        _show(
+          _t(
+            en: 'Payment succeeded. Booking is now paid.',
+            ru: 'Оплата прошла успешно. Бронь оплачена.',
+            uz: 'To‘lov muvaffaqiyatli yakunlandi. Bron to‘landi.',
+          ),
+        );
         return;
       }
       if (status == PaymentStatus.failed || status == PaymentStatus.cancelled) {
-        _show('Payment failed or cancelled. Please retry.');
+        _show(
+          _t(
+            en: 'Payment failed or cancelled. Please retry.',
+            ru: 'Оплата не прошла или была отменена. Попробуйте снова.',
+            uz: 'To‘lov muvaffaqiyatsiz yoki bekor qilingan. Qayta urinib ko‘ring.',
+          ),
+        );
         return;
       }
     }
 
-    _show('Payment is still processing. Check status later.');
+    _show(
+      _t(
+        en: 'Payment is still processing. Check status later.',
+        ru: 'Оплата всё ещё обрабатывается. Проверьте статус позже.',
+        uz: 'To‘lov hali qayta ishlanmoqda. Holatni keyinroq tekshiring.',
+      ),
+    );
   }
 
   void _show(String message) {
@@ -113,9 +169,23 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                     : context.go(RouteNames.bookings),
                 icon: const Icon(Icons.arrow_back),
               ),
-              title: const Text('Booking payment'),
+              title: Text(
+                _t(
+                  en: 'Booking payment',
+                  ru: 'Оплата брони',
+                  uz: 'Bron to‘lovi',
+                ),
+              ),
             ),
-            body: const Center(child: Text('Booking not found.')),
+            body: Center(
+              child: Text(
+                _t(
+                  en: 'Booking not found.',
+                  ru: 'Бронь не найдена.',
+                  uz: 'Bron topilmadi.',
+                ),
+              ),
+            ),
           );
         }
 
@@ -129,25 +199,47 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                   : context.go(RouteNames.bookings),
               icon: const Icon(Icons.arrow_back),
             ),
-            title: const Text('Booking payment'),
+            title: Text(
+              _t(en: 'Booking payment', ru: 'Оплата брони', uz: 'Bron to‘lovi'),
+            ),
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Text(
-                'Pay for booking ${widget.bookingId}',
+                _t(
+                  en: 'Pay for booking ${widget.bookingId}',
+                  ru: 'Оплата брони ${widget.bookingId}',
+                  uz: '${widget.bookingId} broni uchun to‘lov',
+                ),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
-              Text('Amount: ${booking.totalPriceUzs} UZS'),
-              const SizedBox(height: 4),
               Text(
-                'Payment required: ${booking.paymentRequired ? 'Yes' : 'No'}',
+                _t(
+                  en: 'Amount: ${booking.totalPriceUzs} UZS',
+                  ru: 'Сумма: ${booking.totalPriceUzs} UZS',
+                  uz: 'Miqdor: ${booking.totalPriceUzs} UZS',
+                ),
               ),
               const SizedBox(height: 4),
-              Text('Paid: ${booking.isPaid ? 'Yes' : 'No'}'),
+              Text(
+                _t(
+                  en: 'Payment required: ${booking.paymentRequired ? 'Yes' : 'No'}',
+                  ru: 'Требуется оплата: ${booking.paymentRequired ? 'Да' : 'Нет'}',
+                  uz: 'To‘lov kerak: ${booking.paymentRequired ? 'Ha' : 'Yo‘q'}',
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _t(
+                  en: 'Paid: ${booking.isPaid ? 'Yes' : 'No'}',
+                  ru: 'Оплачено: ${booking.isPaid ? 'Да' : 'Нет'}',
+                  uz: 'To‘langan: ${booking.isPaid ? 'Ha' : 'Yo‘q'}',
+                ),
+              ),
               const SizedBox(height: 16),
               if (payment.errorMessage != null)
                 Card(
@@ -160,10 +252,16 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
               if (payment.intent != null)
                 Card(
                   child: ListTile(
-                    title: Text('Intent ${payment.intent!.id}'),
+                    title: Text(
+                      _t(
+                        en: 'Intent ${payment.intent!.id}',
+                        ru: 'Платёж ${payment.intent!.id}',
+                        uz: 'To‘lov ${payment.intent!.id}',
+                      ),
+                    ),
                     subtitle: Text(
-                      'Method: ${payment.intent!.method.name.toUpperCase()}\n'
-                      'Status: ${_statusText(payment.status ?? PaymentStatus.pending)}',
+                      '${_t(en: 'Method', ru: 'Метод', uz: 'Usul')}: ${payment.intent!.method.name.toUpperCase()}\n'
+                      '${_t(en: 'Status', ru: 'Статус', uz: 'Holat')}: ${_statusText(payment.status ?? PaymentStatus.pending)}',
                     ),
                   ),
                 ),
@@ -176,7 +274,16 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                     ? null
                     : () => _pay(booking: booking, method: PaymentMethod.click),
                 icon: const Icon(Icons.account_balance_wallet_outlined),
-                label: const Text('Pay with Click'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
+                label: Text(
+                  _t(
+                    en: 'Pay with Click',
+                    ru: 'Оплатить через Click',
+                    uz: 'Click orqali to‘lash',
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
@@ -187,7 +294,13 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                     ? null
                     : () => _pay(booking: booking, method: PaymentMethod.payme),
                 icon: const Icon(Icons.payment_outlined),
-                label: const Text('Pay with Payme'),
+                label: Text(
+                  _t(
+                    en: 'Pay with Payme',
+                    ru: 'Оплатить через Payme',
+                    uz: 'Payme orqali to‘lash',
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               if (payment.intent != null)
@@ -197,7 +310,13 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                       : () => ref
                             .read(paymentControllerProvider.notifier)
                             .refreshStatus(),
-                  child: const Text('Refresh status'),
+                  child: Text(
+                    _t(
+                      en: 'Refresh status',
+                      ru: 'Обновить статус',
+                      uz: 'Holatni yangilash',
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -209,15 +328,15 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   String _statusText(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.pending:
-        return 'Pending';
+        return _t(en: 'Pending', ru: 'Ожидание', uz: 'Kutilmoqda');
       case PaymentStatus.processing:
-        return 'Processing';
+        return _t(en: 'Processing', ru: 'Обработка', uz: 'Jarayonda');
       case PaymentStatus.succeeded:
-        return 'Succeeded';
+        return _t(en: 'Succeeded', ru: 'Успешно', uz: 'Muvaffaqiyatli');
       case PaymentStatus.failed:
-        return 'Failed';
+        return _t(en: 'Failed', ru: 'Ошибка', uz: 'Xatolik');
       case PaymentStatus.cancelled:
-        return 'Cancelled';
+        return _t(en: 'Cancelled', ru: 'Отменено', uz: 'Bekor qilingan');
     }
   }
 }

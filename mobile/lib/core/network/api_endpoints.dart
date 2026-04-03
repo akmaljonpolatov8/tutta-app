@@ -10,6 +10,9 @@ class ApiEndpoints {
   static const authLogout = '/auth/logout';
   static const authGoogle = '/auth/google';
   static const usersMe = '/users/me';
+  static const usersMePreferences = '/users/me/preferences';
+  static const usersMeDelete = '/users/me/delete';
+  static const authPasswordChange = '/auth/password/change';
   static String userPublicProfile(String userId) =>
       '/users/$userId/public-profile';
 

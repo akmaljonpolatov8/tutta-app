@@ -30,4 +30,11 @@ abstract interface class AuthRepository {
     required String lastName,
     String? phoneNumber,
   });
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
+  Future<void> deleteAccount({required String currentPassword});
 }

@@ -11,6 +11,12 @@ final localeProvider = StateNotifierProvider<LocaleController, Locale?>((ref) {
   return LocaleController(ref);
 });
 
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
+  (ref) {
+    return ThemeModeController(ref);
+  },
+);
+
 class LocaleController extends StateNotifier<Locale?> {
   LocaleController(this._ref) : super(const Locale('en')) {
     _restore();
@@ -42,6 +48,44 @@ class LocaleController extends StateNotifier<Locale?> {
   }
 }
 
+class ThemeModeController extends StateNotifier<ThemeMode> {
+  ThemeModeController(this._ref) : super(ThemeMode.system) {
+    _restore();
+  }
+
+  final Ref _ref;
+  static const _storageKey = 'app_theme_mode';
+
+  Future<void> _restore() async {
+    final raw = await _ref
+        .read(secureStorageServiceProvider)
+        .readString(_storageKey);
+    if (raw == 'light') {
+      state = ThemeMode.light;
+      return;
+    }
+    if (raw == 'dark') {
+      state = ThemeMode.dark;
+      return;
+    }
+    state = ThemeMode.system;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    state = mode;
+    await _ref
+        .read(secureStorageServiceProvider)
+        .writeString(
+          key: _storageKey,
+          value: switch (mode) {
+            ThemeMode.light => 'light',
+            ThemeMode.dark => 'dark',
+            ThemeMode.system => 'system',
+          },
+        );
+  }
+}
+
 class TuttaApp extends ConsumerWidget {
   const TuttaApp({super.key});
 
@@ -49,11 +93,12 @@ class TuttaApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'Tutta',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: router,

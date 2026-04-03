@@ -21,6 +21,7 @@ abstract final class RouteNames {
   static const chatList = '/chat';
   static const premiumPaywall = '/premium';
   static const notifications = '/notifications';
+  static const notificationPreferences = '/settings/notification-preferences';
   static const support = '/support';
   static const settings = '/settings';
 

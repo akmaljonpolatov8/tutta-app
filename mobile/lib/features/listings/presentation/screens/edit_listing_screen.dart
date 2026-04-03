@@ -314,9 +314,9 @@ class _EditListingScreenState extends ConsumerState<EditListingScreen> {
                         (_mapCoordinates ?? '').trim().isEmpty
                             ? _editorText(
                                 context,
-                                en: 'Pick an exact point that guests can open in Google Maps.',
-                                ru: 'Выберите точку на карте для Google Maps.',
-                                uz: 'Google Maps uchun aniq nuqtani xaritada tanlang.',
+                                en: 'Pick an exact point on the in-app map.',
+                                ru: 'Выберите точку на карте в приложении.',
+                                uz: 'Xaritada aniq nuqtani ilova ichida tanlang.',
                               )
                             : _mapCoordinates!,
                         style: TextStyle(

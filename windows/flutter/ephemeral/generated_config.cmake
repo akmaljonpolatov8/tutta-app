@@ -1,0 +1,24 @@
+# Generated code do not commit.
+file(TO_CMAKE_PATH "D:\\dart-flutt\\flutter" FLUTTER_ROOT)
+file(TO_CMAKE_PATH "C:\\Users\\bshuk\\AndroidStudioProjects\\Tutta" PROJECT_DIR)
+
+set(FLUTTER_VERSION "1.0.0+1" PARENT_SCOPE)
+set(FLUTTER_VERSION_MAJOR 1 PARENT_SCOPE)
+set(FLUTTER_VERSION_MINOR 0 PARENT_SCOPE)
+set(FLUTTER_VERSION_PATCH 0 PARENT_SCOPE)
+set(FLUTTER_VERSION_BUILD 1 PARENT_SCOPE)
+
+# Environment variables to pass to tool_backend.sh
+list(APPEND FLUTTER_TOOL_ENVIRONMENT
+  "FLUTTER_ROOT=D:\\dart-flutt\\flutter"
+  "PROJECT_DIR=C:\\Users\\bshuk\\AndroidStudioProjects\\Tutta"
+  "FLUTTER_ROOT=D:\\dart-flutt\\flutter"
+  "FLUTTER_EPHEMERAL_DIR=C:\\Users\\bshuk\\AndroidStudioProjects\\Tutta\\windows\\flutter\\ephemeral"
+  "PROJECT_DIR=C:\\Users\\bshuk\\AndroidStudioProjects\\Tutta"
+  "FLUTTER_TARGET=C:\\Users\\bshuk\\AndroidStudioProjects\\Tutta\\lib\\main.dart"
+  "DART_DEFINES=VVNFX0ZBS0VfQVVUSD1mYWxzZQ==,VVNFX0ZBS0VfQk9PS0lOR1M9ZmFsc2U=,VVNFX0ZBS0VfUEFZTUVOVFM9ZmFsc2U=,VVNFX0ZBS0VfUkVWSUVXUz1mYWxzZQ==,VVNFX0ZBS0VfQ0hBVD1mYWxzZQ==,VVNFX0ZBS0VfTk9USUZJQ0FUSU9OUz1mYWxzZQ==,VVNFX0ZBS0VfSE9TVF9MSVNUSU5HPWZhbHNl,VVNFX0ZBS0VfUFJPRklMRV9WRVJJRklDQVRJT049ZmFsc2U=,RkxVVFRFUl9WRVJTSU9OPTMuNDEuMg==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049OTA2NzNhNGVlZg==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049NmMwYmFhZWJmNw==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMS4w"
+  "DART_OBFUSCATION=false"
+  "TRACK_WIDGET_CREATION=true"
+  "TREE_SHAKE_ICONS=false"
+  "PACKAGE_CONFIG=C:\\Users\\bshuk\\AndroidStudioProjects\\Tutta\\.dart_tool\\package_config.json"
+)

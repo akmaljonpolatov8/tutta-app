@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'route_names.dart';
 import '../theme/app_colors.dart';
@@ -110,6 +112,7 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
         final selectedImage = images.isEmpty
             ? null
             : images[safeSelectedImageIndex];
+        final coordinates = _extractCoordinates(listing);
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -429,7 +432,8 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
                       ),
                       value: '${listing.city}, ${listing.district}',
                     ),
-                    if ((listing.landmark ?? '').trim().isNotEmpty)
+                    if ((listing.landmark ?? '').trim().isNotEmpty &&
+                        coordinates == null)
                       _DetailLine(
                         label: _t(
                           context,
@@ -449,6 +453,22 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
                         ),
                         value: listing.metro!.trim(),
                       ),
+                    const SizedBox(height: 14),
+                    _LocationPreviewMap(
+                      coordinates: coordinates,
+                      title: _t(
+                        context,
+                        en: 'Selected location',
+                        ru: 'Выбранная локация',
+                        uz: 'Tanlangan joylashuv',
+                      ),
+                      emptyMessage: _t(
+                        context,
+                        en: 'Host has not provided exact map coordinates.',
+                        ru: 'Хост пока не указал точные координаты на карте.',
+                        uz: 'Host aniq koordinatalarni hali kiritmagan.',
+                      ),
+                    ),
                     const SizedBox(height: 14),
                     InkWell(
                       borderRadius: BorderRadius.circular(22),
@@ -478,7 +498,7 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Icon(
-                                  Icons.location_searching_rounded,
+                                  Icons.open_in_new_rounded,
                                   color: Colors.white,
                                 ),
                               ),
@@ -679,12 +699,31 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
   }
 
   Future<void> _openChat(Listing listing) async {
+    final currentUserId = ref
+        .read(authControllerProvider)
+        .valueOrNull
+        ?.user
+        ?.id;
+    if (currentUserId != null &&
+        currentUserId.isNotEmpty &&
+        currentUserId == listing.hostId) {
+      _showSnack(
+        _t(
+          context,
+          en: 'This is your own listing. You cannot start a chat with yourself.',
+          ru: 'Это ваше объявление. Нельзя начать чат с самим собой.',
+          uz: 'Bu sizning e\'loningiz. O\'zingiz bilan chat ochib bo\'lmaydi.',
+        ),
+      );
+      return;
+    }
     await context.push(
       '${RouteNames.chatList}?listingId=${listing.id}&hostId=${listing.hostId}',
     );
   }
 
   Future<void> _openMap(Listing listing) async {
+    final coordinates = _extractCoordinates(listing);
     final query = <String>[
       listing.title,
       listing.city,
@@ -692,7 +731,11 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
       listing.landmark ?? '',
       listing.metro ?? '',
     ].where((item) => item.trim().isNotEmpty).join(', ');
-    final opened = await openGoogleMaps(query: query);
+    final opened = await openGoogleMaps(
+      query: query,
+      latitude: coordinates?.$1,
+      longitude: coordinates?.$2,
+    );
     if (!opened && mounted) {
       _showSnack(
         _t(
@@ -703,6 +746,24 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
         ),
       );
     }
+  }
+
+  (double, double)? _extractCoordinates(Listing listing) {
+    final text = (listing.landmark ?? '').trim();
+    final match = RegExp(r'(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)')
+        .firstMatch(text);
+    if (match == null) {
+      return null;
+    }
+    final lat = double.tryParse(match.group(1) ?? '');
+    final lng = double.tryParse(match.group(2) ?? '');
+    if (lat == null || lng == null) {
+      return null;
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return null;
+    }
+    return (lat, lng);
   }
 
   Future<void> _openImageGallery(List<String> images, int initialIndex) async {
@@ -736,6 +797,107 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _LocationPreviewMap extends StatelessWidget {
+  const _LocationPreviewMap({
+    required this.coordinates,
+    required this.title,
+    required this.emptyMessage,
+  });
+
+  final (double, double)? coordinates;
+  final String title;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final coords = coordinates;
+    final hasCoordinates = coords != null;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 182,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceTint,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: hasCoordinates
+            ? Stack(
+                children: [
+                  IgnorePointer(
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(coords.$1, coords.$2),
+                        initialZoom: 14.4,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.none,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'uz.tutta.app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(coords.$1, coords.$2),
+                              width: 44,
+                              height: 44,
+                              child: const Icon(
+                                Icons.location_pin,
+                                color: AppColors.primary,
+                                size: 42,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(230),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    emptyMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 }
 

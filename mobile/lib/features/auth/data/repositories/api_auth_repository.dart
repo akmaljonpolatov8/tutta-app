@@ -178,6 +178,31 @@ class ApiAuthRepository implements AuthRepository {
     );
   }
 
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final result = await _apiClient.post(
+      ApiEndpoints.authPasswordChange,
+      data: <String, dynamic>{
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirm': newPassword,
+      },
+    );
+    result.when(success: (_) => null, failure: _throwFailure);
+  }
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {
+    final result = await _apiClient.delete(
+      ApiEndpoints.usersMeDelete,
+      data: <String, dynamic>{'password': currentPassword},
+    );
+    result.when(success: (_) => null, failure: _throwFailure);
+  }
+
   AuthUser _mapUser(
     Map<String, dynamic> payload, {
     String? accessToken,

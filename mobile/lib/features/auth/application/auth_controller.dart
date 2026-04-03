@@ -393,6 +393,38 @@ class AuthController extends StateNotifier<AsyncValue<AuthState>> {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _authRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+    } on AppException {
+      rethrow;
+    } catch (error) {
+      throw AppException(error.toString());
+    }
+  }
+
+  Future<void> deleteAccount({required String currentPassword}) async {
+    try {
+      await _authRepository.deleteAccount(currentPassword: currentPassword);
+      await _read.read(secureStorageServiceProvider).clearTokens();
+      _read.read(authTokenProvider.notifier).state = null;
+      _lastOtpPhone = null;
+      state = AsyncValue.data(
+        const AuthState.initial().copyWith(hydrated: true),
+      );
+    } on AppException {
+      rethrow;
+    } catch (error) {
+      throw AppException(error.toString());
+    }
+  }
+
   bool _isValidUzPhone(String phone) {
     return RegExp(r'^\+998\d{9}$').hasMatch(phone);
   }

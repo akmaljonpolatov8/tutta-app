@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/route_names.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../listings/application/search_controller.dart';
 import '../../../listings/domain/models/listing.dart';
@@ -27,21 +28,6 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
   final int _guests = 1;
   _CheckoutPaymentMethod _paymentMethod = _CheckoutPaymentMethod.click;
 
-  static const _monthsLong = <String>[
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -58,7 +44,10 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
         .where((day) => !day.isAvailable)
         .map((day) => DateTime(day.date.year, day.date.month, day.date.day))
         .toSet();
-    return _BookingInitData(listing: listing, unavailableDates: unavailableDates);
+    return _BookingInitData(
+      listing: listing,
+      unavailableDates: unavailableDates,
+    );
   }
 
   Future<void> _pickCheckIn(Set<DateTime> unavailableDates) async {
@@ -97,7 +86,13 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
   Future<void> _pickCheckOut(Set<DateTime> unavailableDates) async {
     final start = _checkIn;
     if (start == null) {
-      _show('Please choose check-in date first.');
+      _show(
+        _t(
+          en: 'Please choose check-in date first.',
+          ru: 'Сначала выберите дату заезда.',
+          uz: 'Avval kirish sanasini tanlang.',
+        ),
+      );
       return;
     }
 
@@ -127,23 +122,47 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
     final checkOut = _checkOut;
 
     if (checkIn == null || checkOut == null) {
-      _show('Please select check-in and check-out dates.');
+      _show(
+        _t(
+          en: 'Please select check-in and check-out dates.',
+          ru: 'Выберите даты заезда и выезда.',
+          uz: 'Kirish va chiqish sanalarini tanlang.',
+        ),
+      );
       return;
     }
 
     final nights = checkOut.difference(checkIn).inDays;
     if (nights < 1 || nights > 30) {
-      _show('Booking length must be between 1 and 30 days.');
+      _show(
+        _t(
+          en: 'Booking length must be between 1 and 30 days.',
+          ru: 'Срок бронирования должен быть от 1 до 30 дней.',
+          uz: 'Bron muddati 1 kundan 30 kungacha bo‘lishi kerak.',
+        ),
+      );
       return;
     }
 
     if (_guests > listing.maxGuests) {
-      _show('This listing supports maximum ${listing.maxGuests} guests.');
+      _show(
+        _t(
+          en: 'This listing supports maximum ${listing.maxGuests} guests.',
+          ru: 'В этом объявлении максимум ${listing.maxGuests} гостей.',
+          uz: 'Bu e’londa maksimal ${listing.maxGuests} ta mehmon.',
+        ),
+      );
       return;
     }
 
     if (_rangeHasUnavailable(checkIn, checkOut, unavailableDates)) {
-      _show('Selected dates include unavailable days. Please choose another range.');
+      _show(
+        _t(
+          en: 'Selected dates include unavailable days. Please choose another range.',
+          ru: 'В выбранных датах есть недоступные дни. Выберите другой диапазон.',
+          uz: 'Tanlangan sanalarda band kunlar bor. Boshqa oraliqni tanlang.',
+        ),
+      );
       return;
     }
 
@@ -166,12 +185,24 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
         return;
       }
 
-      _show('Booking request sent to host.');
+      _show(
+        _t(
+          en: 'Booking request sent to host.',
+          ru: 'Запрос на бронь отправлен хозяину.',
+          uz: 'Bron so‘rovi hostga yuborildi.',
+        ),
+      );
       context.go(RouteNames.bookings);
     } on AppException catch (error) {
       _show(error.message);
     } catch (_) {
-      _show('Could not create booking request. Try again.');
+      _show(
+        _t(
+          en: 'Could not create booking request. Try again.',
+          ru: 'Не удалось отправить запрос на бронь. Попробуйте снова.',
+          uz: 'Bron so‘rovini yuborib bo‘lmadi. Qayta urinib ko‘ring.',
+        ),
+      );
     }
   }
 
@@ -179,6 +210,17 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _t({required String en, required String ru, required String uz}) {
+    switch (Localizations.localeOf(context).languageCode) {
+      case 'ru':
+        return ru;
+      case 'uz':
+        return uz;
+      default:
+        return en;
+    }
   }
 
   String _formatMoney(int amount) {
@@ -194,8 +236,8 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
     return '${out.toString()} UZS';
   }
 
-  String _monthLabel(DateTime date) {
-    return '${_monthsLong[date.month - 1]} ${date.year}';
+  String _monthLabel(BuildContext context, DateTime date) {
+    return '${_monthName(context, date.month)} ${date.year}';
   }
 
   bool _rangeHasUnavailable(
@@ -238,11 +280,19 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
         }
         final nights = day.difference(_checkIn!).inDays;
         if (nights < 1 || nights > 30) {
-          errorMessage = 'Booking length must be between 1 and 30 days.';
+          errorMessage = _t(
+            en: 'Booking length must be between 1 and 30 days.',
+            ru: 'Срок бронирования должен быть от 1 до 30 дней.',
+            uz: 'Bron muddati 1 kundan 30 kungacha bo‘lishi kerak.',
+          );
           return;
         }
         if (_rangeHasUnavailable(_checkIn!, day, unavailableDates)) {
-          errorMessage = 'Selected range includes unavailable dates.';
+          errorMessage = _t(
+            en: 'Selected range includes unavailable dates.',
+            ru: 'В выбранном диапазоне есть недоступные даты.',
+            uz: 'Tanlangan oraliqda band sanalar bor.',
+          );
           return;
         }
         _checkOut = day;
@@ -265,7 +315,8 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
         }
 
         final listing = snapshot.data?.listing;
-        final unavailableDates = snapshot.data?.unavailableDates ?? const <DateTime>{};
+        final unavailableDates =
+            snapshot.data?.unavailableDates ?? const <DateTime>{};
         if (listing == null) {
           return Scaffold(
             appBar: AppBar(
@@ -275,9 +326,19 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                     : context.go(RouteNames.search),
                 icon: const Icon(Icons.arrow_back),
               ),
-              title: const Text('Checkout'),
+              title: Text(
+                _t(en: 'Checkout', ru: 'Оформление', uz: 'Rasmiylashtirish'),
+              ),
             ),
-            body: const Center(child: Text('Listing not found.')),
+            body: Center(
+              child: Text(
+                _t(
+                  en: 'Listing not found.',
+                  ru: 'Объявление не найдено.',
+                  uz: 'E’lon topilmadi.',
+                ),
+              ),
+            ),
           );
         }
 
@@ -299,7 +360,7 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
         final total = subtotal + serviceFee + occupancyTax;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF4F5F7),
+          backgroundColor: AppColors.background,
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 132),
@@ -310,23 +371,20 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                       onPressed: () => context.canPop()
                           ? context.pop()
                           : context.go(RouteNames.search),
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xFF0B1B55),
-                      ),
+                      icon: const Icon(Icons.arrow_back, color: AppColors.text),
                     ),
-                    const Text(
+                    Text(
                       'Tutta',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 36 / 2,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0B1B55),
+                        color: AppColors.text,
                       ),
                     ),
                     const Spacer(),
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: const Color(0xFFEDEFF2),
+                      backgroundColor: AppColors.primarySoft,
                       child: ClipOval(
                         child: listing.imageUrls.isNotEmpty
                             ? Image.network(
@@ -337,50 +395,64 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                                 errorBuilder: (_, _, _) => const Icon(
                                   Icons.person,
                                   size: 16,
-                                  color: Color(0xFF6D7280),
+                                  color: AppColors.iconMuted,
                                 ),
                               )
                             : const Icon(
                                 Icons.person,
                                 size: 16,
-                                color: Color(0xFF6D7280),
+                                color: AppColors.iconMuted,
                               ),
                       ),
                     ),
                   ],
                 ).animate().fadeIn(duration: 200.ms),
                 const SizedBox(height: 14),
-                const _StepProgressHeader().animate().fadeIn(duration: 220.ms),
+                _StepProgressHeader().animate().fadeIn(duration: 220.ms),
                 const SizedBox(height: 22),
                 Row(
                   children: [
-                    const Text(
-                      'Select Dates',
-                      style: TextStyle(
+                    Text(
+                      _t(
+                        en: 'Select dates',
+                        ru: 'Выберите даты',
+                        uz: 'Sanalarni tanlang',
+                      ),
+                      style: const TextStyle(
                         fontSize: 33 / 2,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF0D1E57),
+                        color: AppColors.text,
                       ),
                     ),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () {
                         _show(
-                          'Total includes nightly price, service fee, and occupancy taxes.',
+                          _t(
+                            en: 'Total includes nightly price, service fee, and occupancy taxes.',
+                            ru: 'Итоговая сумма включает стоимость за ночь, сервисный сбор и налоги.',
+                            uz: 'Umumiy summa bir kecha narxi, servis to‘lovi va soliqlarni o‘z ichiga oladi.',
+                          ),
                         );
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF0D2D82),
+                        foregroundColor: AppColors.primaryDeep,
                       ),
                       icon: const Icon(Icons.info, size: 14),
-                      label: const Text('Flexible pricing'),
+                      label: Text(
+                        _t(
+                          en: 'Flexible pricing',
+                          ru: 'Гибкая цена',
+                          uz: 'Moslashuvchan narx',
+                        ),
+                      ),
                     ),
                   ],
                 ).animate().fadeIn(delay: 40.ms, duration: 220.ms),
                 const SizedBox(height: 10),
                 _CalendarPanel(
                   displayedMonth: _displayMonth,
-                  monthLabel: _monthLabel(_displayMonth),
+                  monthLabel: _monthLabel(context, _displayMonth),
                   checkIn: _checkIn,
                   checkOut: _checkOut,
                   unavailableDates: unavailableDates,
@@ -402,7 +474,8 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                         }),
                   onSelectDate: loading
                       ? null
-                      : (date) => _onCalendarDaySelected(date, unavailableDates),
+                      : (date) =>
+                            _onCalendarDaySelected(date, unavailableDates),
                   onPickCheckIn: loading
                       ? null
                       : () => _pickCheckIn(unavailableDates),
@@ -413,18 +486,30 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                 const SizedBox(height: 8),
                 Text(
                   unavailableDates.isEmpty
-                      ? 'All days are currently available.'
-                      : '${unavailableDates.length} blocked day(s) in calendar.',
+                      ? _t(
+                          en: 'All days are currently available.',
+                          ru: 'Сейчас все дни доступны.',
+                          uz: 'Hozircha barcha kunlar bo‘sh.',
+                        )
+                      : _t(
+                          en: '${unavailableDates.length} blocked day(s) in calendar.',
+                          ru: '${unavailableDates.length} недоступных дн(я/ей) в календаре.',
+                          uz: 'Kalendarida ${unavailableDates.length} ta band kun bor.',
+                        ),
                   style: const TextStyle(
-                    color: Color(0xFF6B7183),
+                    color: AppColors.textMuted,
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Payment Method',
-                  style: TextStyle(
-                    color: Color(0xFF0D1E57),
+                Text(
+                  _t(
+                    en: 'Payment method',
+                    ru: 'Способ оплаты',
+                    uz: 'To‘lov usuli',
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.text,
                     fontSize: 30 / 2,
                     fontWeight: FontWeight.w600,
                   ),
@@ -432,7 +517,11 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                 const SizedBox(height: 10),
                 _PaymentMethodTile(
                   title: 'Click',
-                  subtitle: 'Fast & Secure Payment',
+                  subtitle: _t(
+                    en: 'Fast and secure payment',
+                    ru: 'Быстрая и безопасная оплата',
+                    uz: 'Tez va xavfsiz to‘lov',
+                  ),
                   icon: Icons.flash_on,
                   selected: _paymentMethod == _CheckoutPaymentMethod.click,
                   onTap: loading
@@ -444,7 +533,11 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                 const SizedBox(height: 10),
                 _PaymentMethodTile(
                   title: 'Payme',
-                  subtitle: 'Modern Mobile Pay',
+                  subtitle: _t(
+                    en: 'Modern mobile payment',
+                    ru: 'Современная мобильная оплата',
+                    uz: 'Zamonaviy mobil to‘lov',
+                  ),
                   icon: Icons.account_balance_wallet_outlined,
                   selected: _paymentMethod == _CheckoutPaymentMethod.payme,
                   onTap: loading
@@ -465,35 +558,43 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                   isFreeStay: isFreeStay,
                 ).animate().fadeIn(delay: 180.ms, duration: 240.ms),
                 const SizedBox(height: 14),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.shield_outlined,
                       size: 14,
-                      color: Color(0xFF6A6F7E),
+                      color: AppColors.textMuted,
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
-                      'SECURE CHECKOUT',
-                      style: TextStyle(
-                        color: Color(0xFF6A6F7E),
+                      _t(
+                        en: 'SECURE CHECKOUT',
+                        ru: 'БЕЗОПАСНАЯ ОПЛАТА',
+                        uz: 'XAVFSIZ TO‘LOV',
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
                       ),
                     ),
-                    SizedBox(width: 20),
-                    Icon(
+                    const SizedBox(width: 20),
+                    const Icon(
                       Icons.headset_mic_outlined,
                       size: 14,
-                      color: Color(0xFF6A6F7E),
+                      color: AppColors.textMuted,
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
-                      '24/7 CONCIERGE',
-                      style: TextStyle(
-                        color: Color(0xFF6A6F7E),
+                      _t(
+                        en: '24/7 SUPPORT',
+                        ru: 'ПОДДЕРЖКА 24/7',
+                        uz: '24/7 YORDAM',
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
@@ -509,7 +610,7 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF4F5F7),
+                color: AppColors.background,
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x14000000),
@@ -527,7 +628,7 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                         : () => _submit(listing, unavailableDates),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(60),
-                      backgroundColor: const Color(0xFF082A7B),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
@@ -537,14 +638,30 @@ class _BookingRequestScreenState extends ConsumerState<BookingRequestScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    child: Text(loading ? 'Submitting...' : 'Confirm Booking'),
+                    child: Text(
+                      loading
+                          ? _t(
+                              en: 'Submitting...',
+                              ru: 'Отправка...',
+                              uz: 'Yuborilmoqda...',
+                            )
+                          : _t(
+                              en: 'Confirm booking',
+                              ru: 'Подтвердить бронь',
+                              uz: 'Bronni tasdiqlash',
+                            ),
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'By clicking "Confirm Booking", you agree to\nTutta\'s Terms of Service and Cancellation Policy.',
+                  Text(
+                    _t(
+                      en: 'By clicking "Confirm booking", you agree to\nTutta\'s Terms of Service and Cancellation Policy.',
+                      ru: 'Нажимая "Подтвердить бронь", вы соглашаетесь\nс условиями сервиса Tutta и правилами отмены.',
+                      uz: '"Bronni tasdiqlash" tugmasini bosib,\nTutta xizmat shartlari va bekor qilish qoidalariga rozilik bildirasiz.',
+                    ),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF6B7183),
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
                       fontSize: 11,
                       height: 1.4,
                     ),
@@ -579,22 +696,27 @@ class _StepProgressHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
             Text(
-              'STEP 2 OF 3: CHECKOUT',
-              style: TextStyle(
-                color: Color(0xFF0D1E57),
+              _tr(
+                context,
+                en: 'STEP 2 OF 3: CHECKOUT',
+                ru: 'ШАГ 2 ИЗ 3: ОФОРМЛЕНИЕ',
+                uz: '3 DAN 2-QADAM: RASMIYLASHTIRISH',
+              ),
+              style: const TextStyle(
+                color: AppColors.text,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 2,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text(
-              'PAYMENT',
-              style: TextStyle(
-                color: Color(0xFF6A6F7E),
+              _tr(context, en: 'PAYMENT', ru: 'ОПЛАТА', uz: 'TO‘LOV'),
+              style: const TextStyle(
+                color: AppColors.textMuted,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1,
@@ -608,8 +730,8 @@ class _StepProgressHeader extends StatelessWidget {
           child: LinearProgressIndicator(
             minHeight: 5,
             value: 2 / 3,
-            backgroundColor: const Color(0xFFE1E3E8),
-            color: const Color(0xFF062978),
+            backgroundColor: AppColors.border,
+            color: AppColors.primary,
           ),
         ),
       ],
@@ -647,9 +769,9 @@ class _CalendarPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE5E7EE)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -659,7 +781,7 @@ class _CalendarPanel extends StatelessWidget {
               Text(
                 monthLabel,
                 style: const TextStyle(
-                  color: Color(0xFF141B2D),
+                  color: AppColors.text,
                   fontWeight: FontWeight.w600,
                   fontSize: 31 / 2,
                 ),
@@ -678,17 +800,12 @@ class _CalendarPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _WeekText('MO'),
-              _WeekText('TU'),
-              _WeekText('WE'),
-              _WeekText('TH'),
-              _WeekText('FR'),
-              _WeekText('SA'),
-              _WeekText('SU'),
-            ],
+            children: List.generate(
+              7,
+              (index) => _WeekText(_weekdayShort(context, index)),
+            ),
           ),
           const SizedBox(height: 10),
           ..._buildWeekRows(),
@@ -697,9 +814,14 @@ class _CalendarPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: _DatePickChip(
-                  label: 'Check-in',
+                  label: _tr(
+                    context,
+                    en: 'Check-in',
+                    ru: 'Заезд',
+                    uz: 'Kirish',
+                  ),
                   value: checkIn == null
-                      ? 'Select'
+                      ? _tr(context, en: 'Select', ru: 'Выбрать', uz: 'Tanlash')
                       : '${checkIn!.day}/${checkIn!.month}',
                   selected: checkIn != null,
                   onTap: onPickCheckIn,
@@ -708,9 +830,14 @@ class _CalendarPanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _DatePickChip(
-                  label: 'Check-out',
+                  label: _tr(
+                    context,
+                    en: 'Check-out',
+                    ru: 'Выезд',
+                    uz: 'Chiqish',
+                  ),
                   value: checkOut == null
-                      ? 'Select'
+                      ? _tr(context, en: 'Select', ru: 'Выбрать', uz: 'Tanlash')
                       : '${checkOut!.day}/${checkOut!.month}',
                   selected: checkOut != null,
                   onTap: onPickCheckOut,
@@ -743,10 +870,13 @@ class _CalendarPanel extends StatelessWidget {
               final inCurrentMonth = normalized.month == displayedMonth.month;
               final isUnavailable = unavailableDates.contains(normalized);
               final isPast = normalized.isBefore(todayDate);
-              final isCheckIn = checkIn != null && _sameDate(checkIn!, normalized);
-              final isCheckOut = checkOut != null && _sameDate(checkOut!, normalized);
+              final isCheckIn =
+                  checkIn != null && _sameDate(checkIn!, normalized);
+              final isCheckOut =
+                  checkOut != null && _sameDate(checkOut!, normalized);
               final isSelected = isCheckIn || isCheckOut;
-              final inRange = checkIn != null &&
+              final inRange =
+                  checkIn != null &&
                   checkOut != null &&
                   normalized.isAfter(checkIn!) &&
                   normalized.isBefore(checkOut!);
@@ -785,7 +915,7 @@ class _WeekText extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: Color(0xFF737989),
+        color: AppColors.textMuted,
         fontWeight: FontWeight.w700,
         fontSize: 14,
       ),
@@ -813,9 +943,9 @@ class _CalendarNumberCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected
-        ? const Color(0xFF062977)
+        ? AppColors.primary
         : inRange
-        ? const Color(0xFFDCE7FB)
+        ? AppColors.primarySoft
         : Colors.transparent;
 
     return InkWell(
@@ -833,12 +963,12 @@ class _CalendarNumberCell extends StatelessWidget {
           label,
           style: TextStyle(
             color: blocked
-                ? const Color(0xFFCACED8)
+                ? AppColors.borderStrong
                 : muted
-                ? const Color(0xFFBDC1CB)
+                ? AppColors.iconMuted
                 : selected
                 ? Colors.white
-                : const Color(0xFF141B2D),
+                : AppColors.text,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
@@ -868,8 +998,11 @@ class _DatePickChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF0A2B7A) : const Color(0xFFF1F3F8),
+          color: selected ? AppColors.primary : AppColors.surfaceTint,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? AppColors.primaryDeep : AppColors.border,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,8 +1011,8 @@ class _DatePickChip extends StatelessWidget {
               label,
               style: TextStyle(
                 color: selected
-                    ? const Color(0xFFD1D9F0)
-                    : const Color(0xFF697187),
+                    ? Colors.white.withValues(alpha: 0.78)
+                    : AppColors.textMuted,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -888,7 +1021,7 @@ class _DatePickChip extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF151B30),
+                color: selected ? Colors.white : AppColors.text,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
@@ -923,16 +1056,16 @@ class _PaymentMethodTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: selected ? const Color(0xFF0A2B7A) : const Color(0xFFE2E5ED),
+            color: selected ? AppColors.primary : AppColors.border,
             width: selected ? 2 : 1,
           ),
           boxShadow: selected
               ? const [
                   BoxShadow(
-                    color: Color(0x140A2B7A),
+                    color: Color(0x26F15A24),
                     blurRadius: 10,
                     offset: Offset(0, 4),
                   ),
@@ -948,7 +1081,7 @@ class _PaymentMethodTile extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Color(0xFF121829),
+                      color: AppColors.text,
                       fontSize: 30 / 2,
                       fontWeight: FontWeight.w600,
                     ),
@@ -957,7 +1090,7 @@ class _PaymentMethodTile extends StatelessWidget {
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      color: Color(0xFF6B7183),
+                      color: AppColors.textMuted,
                       fontSize: 14,
                     ),
                   ),
@@ -968,21 +1101,17 @@ class _PaymentMethodTile extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: selected
-                    ? const Color(0xFFCBD8F6)
-                    : const Color(0xFFF0F1F4),
+                color: selected ? AppColors.primarySoft : AppColors.surfaceTint,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Icon(icon, size: 20, color: const Color(0xFF0A2B7A)),
+              child: Icon(icon, size: 20, color: AppColors.primaryDeep),
             ),
             const SizedBox(width: 10),
             Icon(
               selected
                   ? Icons.check_circle_rounded
                   : Icons.radio_button_unchecked,
-              color: selected
-                  ? const Color(0xFF0A2B7A)
-                  : const Color(0xFFB0B5C2),
+              color: selected ? AppColors.primaryDeep : AppColors.iconMuted,
               size: 20,
             ),
           ],
@@ -1015,13 +1144,20 @@ class _ReceiptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nightsText = nights == null ? 'Select dates' : '$nights nights';
+    final nightsText = nights == null
+        ? _tr(
+            context,
+            en: 'Select dates',
+            ru: 'Выберите даты',
+            uz: 'Sanalarni tanlang',
+          )
+        : _nightsText(context, nights!);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE5E7EE)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1037,11 +1173,11 @@ class _ReceiptCard extends StatelessWidget {
                   listing.imageUrls.first,
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => Container(
-                    color: const Color(0xFFE9ECF2),
+                    color: AppColors.surfaceTint,
                     alignment: Alignment.center,
                     child: const Icon(
                       Icons.house,
-                      color: Color(0xFF9AA0AE),
+                      color: AppColors.iconMuted,
                       size: 30,
                     ),
                   ),
@@ -1056,7 +1192,7 @@ class _ReceiptCard extends StatelessWidget {
                 Text(
                   listing.title,
                   style: const TextStyle(
-                    color: Color(0xFF0F1C52),
+                    color: AppColors.text,
                     fontSize: 34 / 2,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1065,49 +1201,78 @@ class _ReceiptCard extends StatelessWidget {
                 Text(
                   nightsText,
                   style: const TextStyle(
-                    color: Color(0xFF6B7183),
+                    color: AppColors.textMuted,
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 12),
                 _ReceiptRow(
-                  label: isFreeStay ? 'Rate' : 'Nightly subtotal',
-                  value: isFreeStay ? 'Free Stay' : formatMoney(subtotal),
+                  label: isFreeStay
+                      ? _tr(context, en: 'Rate', ru: 'Тариф', uz: 'Tarif')
+                      : _tr(
+                          context,
+                          en: 'Nightly subtotal',
+                          ru: 'Стоимость за ночи',
+                          uz: 'Tunlar bo‘yicha summa',
+                        ),
+                  value: isFreeStay
+                      ? _tr(
+                          context,
+                          en: 'Free stay',
+                          ru: 'Бесплатно',
+                          uz: 'Bepul',
+                        )
+                      : formatMoney(subtotal),
                 ),
                 const SizedBox(height: 8),
                 _ReceiptRow(
-                  label: 'Service fee (Tutta Concierge)',
+                  label: _tr(
+                    context,
+                    en: 'Service fee (Tutta Concierge)',
+                    ru: 'Сервисный сбор (Tutta Concierge)',
+                    uz: 'Xizmat to‘lovi (Tutta Concierge)',
+                  ),
                   value: formatMoney(serviceFee),
                 ),
                 const SizedBox(height: 8),
                 _ReceiptRow(
-                  label: 'Occupancy taxes',
+                  label: _tr(
+                    context,
+                    en: 'Occupancy taxes',
+                    ru: 'Налоги',
+                    uz: 'Soliqlar',
+                  ),
                   value: formatMoney(occupancyTax),
                 ),
                 const SizedBox(height: 10),
-                const Divider(color: Color(0xFFE8EAF0), height: 1),
+                const Divider(color: AppColors.border, height: 1),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Total',
-                          style: TextStyle(
-                            color: Color(0xFF172146),
+                          _tr(context, en: 'Total', ru: 'Итого', uz: 'Jami'),
+                          style: const TextStyle(
+                            color: AppColors.text,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: 1),
+                        const SizedBox(height: 1),
                         Text(
-                          'UZS (INCL. ALL TAXES)',
-                          style: TextStyle(
-                            color: Color(0xFF7A8194),
+                          _tr(
+                            context,
+                            en: 'UZS (incl. all taxes)',
+                            ru: 'UZS (с учетом всех налогов)',
+                            uz: 'UZS (barcha soliqlar bilan)',
+                          ),
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 1.1,
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ],
@@ -1116,7 +1281,7 @@ class _ReceiptCard extends StatelessWidget {
                     Text(
                       formatMoney(total),
                       style: const TextStyle(
-                        color: Color(0xFF0A2B7A),
+                        color: AppColors.primaryDeep,
                         fontSize: 39 / 2,
                         fontWeight: FontWeight.w800,
                       ),
@@ -1145,7 +1310,7 @@ class _ReceiptRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(color: Color(0xFF2E3448), fontSize: 16),
+            style: const TextStyle(color: AppColors.textSoft, fontSize: 16),
           ),
         ),
         const SizedBox(width: 12),
@@ -1153,12 +1318,111 @@ class _ReceiptRow extends StatelessWidget {
           value,
           textAlign: TextAlign.end,
           style: const TextStyle(
-            color: Color(0xFF11182E),
+            color: AppColors.text,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
       ],
     );
+  }
+}
+
+String _tr(
+  BuildContext context, {
+  required String en,
+  required String ru,
+  required String uz,
+}) {
+  switch (Localizations.localeOf(context).languageCode) {
+    case 'ru':
+      return ru;
+    case 'uz':
+      return uz;
+    default:
+      return en;
+  }
+}
+
+String _monthName(BuildContext context, int month) {
+  const en = <String>[
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  const ru = <String>[
+    'Январь',
+    'Февраль',
+    'Март',
+    'Апрель',
+    'Май',
+    'Июнь',
+    'Июль',
+    'Август',
+    'Сентябрь',
+    'Октябрь',
+    'Ноябрь',
+    'Декабрь',
+  ];
+  const uz = <String>[
+    'Yanvar',
+    'Fevral',
+    'Mart',
+    'Aprel',
+    'May',
+    'Iyun',
+    'Iyul',
+    'Avgust',
+    'Sentabr',
+    'Oktabr',
+    'Noyabr',
+    'Dekabr',
+  ];
+
+  final index = month.clamp(1, 12) - 1;
+  switch (Localizations.localeOf(context).languageCode) {
+    case 'ru':
+      return ru[index];
+    case 'uz':
+      return uz[index];
+    default:
+      return en[index];
+  }
+}
+
+String _weekdayShort(BuildContext context, int weekdayIndexFromMonday) {
+  const en = <String>['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+  const ru = <String>['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
+  const uz = <String>['DU', 'SE', 'CH', 'PA', 'JU', 'SH', 'YA'];
+
+  final safe = weekdayIndexFromMonday.clamp(0, 6);
+  switch (Localizations.localeOf(context).languageCode) {
+    case 'ru':
+      return ru[safe];
+    case 'uz':
+      return uz[safe];
+    default:
+      return en[safe];
+  }
+}
+
+String _nightsText(BuildContext context, int nights) {
+  final safeNights = nights < 0 ? 0 : nights;
+  switch (Localizations.localeOf(context).languageCode) {
+    case 'ru':
+      return '$safeNights ноч.';
+    case 'uz':
+      return '$safeNights tun';
+    default:
+      return '$safeNights nights';
   }
 }

@@ -29,7 +29,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'Panoramic city-view apartment with modern interior, fast Wi-Fi, and quick metro access.',
-    landmark: 'Minor Mosque',
+    landmark: '41.352312, 69.287169',
     metro: 'Shahriston',
   ),
   Listing(
@@ -59,7 +59,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'Premium loft with cozy lighting, strong AC, and a comfortable workspace.',
-    landmark: 'Tashkent City Mall',
+    landmark: '41.311861, 69.245982',
     metro: 'Kosmonavtlar',
   ),
   Listing(
@@ -90,7 +90,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'Spacious family-friendly stay close to city attractions and parks.',
-    landmark: 'Magic City',
+    landmark: '41.299486, 69.240908',
     metro: 'Novza',
   ),
   Listing(
@@ -115,7 +115,7 @@ const List<Listing> kExampleListings = <Listing>[
     imageUrls: <String>['assets/images/home3.png', 'assets/images/home2.png'],
     description:
         'Private room in a stylish apartment, great for solo trips and quick business stays.',
-    landmark: 'Next Mall',
+    landmark: '41.292514, 69.267821',
     metro: 'Oybek',
   ),
   Listing(
@@ -145,7 +145,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'A bright and calm apartment close to Registan, perfect for short cultural stays.',
-    landmark: 'Registan Square',
+    landmark: '39.654182, 66.975783',
     metro: null,
   ),
   Listing(
@@ -171,7 +171,7 @@ const List<Listing> kExampleListings = <Listing>[
     imageUrls: <String>['assets/images/home3.png', 'assets/images/home2.png'],
     description:
         'Compact loft with authentic local vibe and easy access to old city routes.',
-    landmark: 'Siyob Bazaar',
+    landmark: '39.673954, 66.988142',
     metro: null,
   ),
   Listing(
@@ -201,7 +201,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'Stylish short-stay apartment near historical sights and evening walking streets.',
-    landmark: 'Poi-Kalyan',
+    landmark: '39.775338, 64.415194',
     metro: null,
   ),
   Listing(
@@ -232,7 +232,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'Spacious apartment for families with a clean modern kitchen and peaceful inner yard.',
-    landmark: 'Lyabi-Hauz',
+    landmark: '39.774982, 64.421603',
     metro: null,
   ),
   Listing(
@@ -258,7 +258,7 @@ const List<Listing> kExampleListings = <Listing>[
     imageUrls: <String>['assets/images/home3.png', 'assets/images/home2.png'],
     description:
         'Comfortable private room for travelers who want to stay next to Khiva heritage sites.',
-    landmark: 'Ichan Kala',
+    landmark: '41.378621, 60.361944',
     metro: null,
   ),
   Listing(
@@ -284,7 +284,7 @@ const List<Listing> kExampleListings = <Listing>[
     imageUrls: <String>['assets/images/home4.png', 'assets/images/home1.png'],
     description:
         'Clean and modern apartment close to city cafes and main transport routes.',
-    landmark: 'Al-Fergani Park',
+    landmark: '40.389775, 71.784592',
     metro: null,
   ),
   Listing(
@@ -314,7 +314,7 @@ const List<Listing> kExampleListings = <Listing>[
     ],
     description:
         'A calm home-part stay with green view and practical amenities for families.',
-    landmark: 'Afsonalar Valley Park',
+    landmark: '41.002184, 71.672981',
     metro: null,
   ),
   Listing(
@@ -340,7 +340,7 @@ const List<Listing> kExampleListings = <Listing>[
     imageUrls: <String>['assets/images/home2.png', 'assets/images/home4.png'],
     description:
         'A comfortable and bright apartment for short city stays and weekend trips.',
-    landmark: 'Andijan Railway Station',
+    landmark: '40.785811, 72.350483',
     metro: null,
   ),
 ];

@@ -24,6 +24,7 @@ import '../../features/listings/presentation/screens/search_map_screen.dart';
 import '../../features/premium/presentation/screens/premium_paywall_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/support_screen.dart';
+import '../../features/profile/presentation/screens/notification_preferences_screen.dart';
 import '../../features/reviews/presentation/screens/review_submit_screen.dart';
 import '../../features/role/presentation/screens/role_selector_screen.dart';
 import '../../features/wishlist/presentation/screens/favorites_screen.dart';
@@ -205,6 +206,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.notificationPreferences,
+        builder: (context, state) => const NotificationPreferencesScreen(),
       ),
       GoRoute(
         path: RouteNames.support,

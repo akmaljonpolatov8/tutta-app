@@ -256,9 +256,9 @@ class ApiListingsRepository implements ListingsRepository {
       if (parsedCoordinates != null) 'latitude': parsedCoordinates.$1,
       if (parsedCoordinates != null) 'longitude': parsedCoordinates.$2,
       if (normalizedLandmark.isNotEmpty || mapCoordinates.isNotEmpty)
-        'landmark': normalizedLandmark.isNotEmpty
-            ? normalizedLandmark
-            : mapCoordinates,
+        'landmark': mapCoordinates.isNotEmpty
+            ? mapCoordinates
+            : normalizedLandmark,
       if ((input.metro ?? '').trim().isNotEmpty) 'metro': input.metro!.trim(),
       'listing_type': _mapTypeToApi(input.type),
       'amenities': input.amenities
@@ -336,6 +336,10 @@ class ApiListingsRepository implements ListingsRepository {
     final landmarkRaw = payload['landmark']?.toString().trim();
     final payloadCoordinates = _extractCoordinatesFromPayload(payload);
     final derivedCoordinates = _extractCoordinatesFromLocation(location);
+    final fallbackCoordinates = _fallbackCoordinates(
+      title: payload['title']?.toString() ?? '',
+      landmark: landmarkRaw,
+    );
 
     return Listing(
       id: id,
@@ -354,11 +358,35 @@ class ApiListingsRepository implements ListingsRepository {
       amenities: resolvedAmenities,
       imageUrls: resolvedImages,
       description: payload['description']?.toString(),
-      landmark: (landmarkRaw?.isNotEmpty ?? false)
-          ? landmarkRaw
-          : payloadCoordinates ?? derivedCoordinates,
+      landmark: payloadCoordinates ??
+          derivedCoordinates ??
+          fallbackCoordinates ??
+          ((landmarkRaw?.isNotEmpty ?? false) ? landmarkRaw : null),
       metro: payload['metro']?.toString(),
     );
+  }
+
+  String? _fallbackCoordinates({required String title, String? landmark}) {
+    final normalizedTitle = title.toLowerCase().trim();
+    final normalizedLandmark = (landmark ?? '').toLowerCase().trim();
+
+    if (normalizedTitle.contains('minor mosque') ||
+        normalizedLandmark.contains('minor')) {
+      return '41.352312, 69.287169';
+    }
+    if (normalizedTitle.contains('tashkent city') ||
+        normalizedLandmark.contains('tashkent city')) {
+      return '41.311861, 69.245982';
+    }
+    if (normalizedTitle.contains('magic city') ||
+        normalizedLandmark.contains('magic city')) {
+      return '41.299486, 69.240908';
+    }
+    if (normalizedTitle.contains('quiet room with balcony') ||
+        normalizedLandmark.contains('next mall')) {
+      return '41.292514, 69.267821';
+    }
+    return null;
   }
 
   List<String> _fallbackAssetImages({required String title}) {

@@ -433,14 +433,7 @@ class _DirectThreadResolverState extends ConsumerState<_DirectThreadResolver> {
                   ru: 'Не удалось открыть чат',
                   uz: 'Chatni ochib boʼlmadi',
                 ),
-                subtitle:
-                    snapshot.error?.toString() ??
-                    _tr(
-                      context,
-                      en: 'Please try again.',
-                      ru: 'Пожалуйста, попробуйте снова.',
-                      uz: 'Iltimos, yana urinib koʼring.',
-                    ),
+                subtitle: _resolverErrorText(snapshot.error),
                 actionLabel: _tr(
                   context,
                   en: 'Go back',
@@ -463,9 +456,32 @@ class _DirectThreadResolverState extends ConsumerState<_DirectThreadResolver> {
     if (hostId == null || hostId.isEmpty) {
       throw StateError('Host id is required to open chat.');
     }
+    final currentUserId = ref
+        .read(authControllerProvider)
+        .valueOrNull
+        ?.user
+        ?.id;
+    if (currentUserId != null &&
+        currentUserId.isNotEmpty &&
+        currentUserId == hostId) {
+      throw StateError('Cannot start chat with yourself.');
+    }
     return ref
         .read(chatActionsProvider)
         .createOrGetThread(listingId: widget.listingId, hostUserId: hostId);
+  }
+
+  String _resolverErrorText(Object? error) {
+    final raw = error?.toString().trim() ?? '';
+    if (raw.isEmpty) {
+      return 'Please try again.';
+    }
+    final lower = raw.toLowerCase();
+    if (lower.contains('guest_id and host_id must be different users') ||
+        lower.contains('cannot start chat with yourself')) {
+      return 'This is your own listing. You cannot start a chat with yourself.';
+    }
+    return raw;
   }
 }
 

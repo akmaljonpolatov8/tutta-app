@@ -22,20 +22,38 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
   int _reloadToken = 0;
   BookingStatus? _statusFilter;
 
+  String _copy({required String en, required String ru, required String uz}) {
+    return _l10n(context, en: en, ru: ru, uz: uz);
+  }
+
   Future<void> _runAction(Future<void> Function() action) async {
     try {
       await action();
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Updated successfully.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _copy(
+              en: 'Updated successfully.',
+              ru: 'Успешно обновлено.',
+              uz: 'Muvaffaqiyatli yangilandi.',
+            ),
+          ),
+        ),
+      );
       setState(() => _reloadToken++);
     } on AppException catch (error) {
       _show(error.message);
     } catch (_) {
-      _show('Could not update booking status.');
+      _show(
+        _copy(
+          en: 'Could not update booking status.',
+          ru: 'Не удалось обновить статус брони.',
+          uz: 'Bron holatini yangilab bo‘lmadi.',
+        ),
+      );
     }
   }
 
@@ -55,14 +73,21 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            onPressed: () => context.canPop()
-                ? context.pop()
-                : context.go(RouteNames.home),
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(RouteNames.home),
             icon: const Icon(Icons.arrow_back),
           ),
-          title: const Text('Bookings'),
+          title: Text(_copy(en: 'Bookings', ru: 'Брони', uz: 'Bronlar')),
         ),
-        body: const Center(child: Text('Please sign in to view bookings.')),
+        body: Center(
+          child: Text(
+            _copy(
+              en: 'Please sign in to view bookings.',
+              ru: 'Войдите в аккаунт, чтобы посмотреть брони.',
+              uz: 'Bronlarni ko‘rish uchun tizimga kiring.',
+            ),
+          ),
+        ),
       );
     }
 
@@ -70,14 +95,21 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            onPressed: () => context.canPop()
-                ? context.pop()
-                : context.go(RouteNames.home),
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(RouteNames.home),
             icon: const Icon(Icons.arrow_back),
           ),
-          title: const Text('Bookings'),
+          title: Text(_copy(en: 'Bookings', ru: 'Брони', uz: 'Bronlar')),
         ),
-        body: const Center(child: Text('Select renter or host mode first.')),
+        body: Center(
+          child: Text(
+            _copy(
+              en: 'Select renter or host mode first.',
+              ru: 'Сначала выберите режим арендатора или хоста.',
+              uz: 'Avval mehmon yoki host rejimini tanlang.',
+            ),
+          ),
+        ),
       );
     }
 
@@ -97,7 +129,17 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                 icon: const Icon(Icons.arrow_back),
               ),
               title: Text(
-                role == AppRole.host ? 'Host requests' : 'My bookings',
+                role == AppRole.host
+                    ? _copy(
+                        en: 'Host requests',
+                        ru: 'Запросы хоста',
+                        uz: 'Host so‘rovlari',
+                      )
+                    : _copy(
+                        en: 'My bookings',
+                        ru: 'Мои брони',
+                        uz: 'Mening bronlarim',
+                      ),
               ),
             ),
             body: const Center(child: CircularProgressIndicator()),
@@ -117,7 +159,19 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
               onPressed: () => context.go(RouteNames.home),
               icon: const Icon(Icons.arrow_back),
             ),
-            title: Text(role == AppRole.host ? 'Host requests' : 'My bookings'),
+            title: Text(
+              role == AppRole.host
+                  ? _copy(
+                      en: 'Host requests',
+                      ru: 'Запросы хоста',
+                      uz: 'Host so‘rovlari',
+                    )
+                  : _copy(
+                      en: 'My bookings',
+                      ru: 'Мои брони',
+                      uz: 'Mening bronlarim',
+                    ),
+            ),
           ),
           body: Column(
             children: [
@@ -134,7 +188,7 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                 child: Row(
                   children: [
                     ChoiceChip(
-                      label: const Text('All'),
+                      label: Text(_copy(en: 'All', ru: 'Все', uz: 'Barchasi')),
                       selected: _statusFilter == null,
                       onSelected: (_) => setState(() => _statusFilter = null),
                     ),
@@ -229,15 +283,23 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
   String _filterLabel(BookingStatus status) {
     switch (status) {
       case BookingStatus.pendingHostApproval:
-        return 'Pending';
+        return _copy(en: 'Pending', ru: 'Ожидание', uz: 'Kutilmoqda');
       case BookingStatus.confirmed:
-        return 'Confirmed';
+        return _copy(en: 'Confirmed', ru: 'Подтверждено', uz: 'Tasdiqlangan');
       case BookingStatus.cancelledByGuest:
-        return 'Guest cancelled';
+        return _copy(
+          en: 'Guest cancelled',
+          ru: 'Отменено гостем',
+          uz: 'Mehmon bekor qilgan',
+        );
       case BookingStatus.cancelledByHost:
-        return 'Host cancelled';
+        return _copy(
+          en: 'Host cancelled',
+          ru: 'Отменено хостом',
+          uz: 'Host bekor qilgan',
+        );
       case BookingStatus.completed:
-        return 'Completed';
+        return _copy(en: 'Completed', ru: 'Завершено', uz: 'Yakunlangan');
     }
   }
 }
@@ -282,7 +344,12 @@ class _BookingTile extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Listing ${booking.listingId}',
+                  _l10n(
+                    context,
+                    en: 'Listing ${booking.listingId}',
+                    ru: 'Объявление ${booking.listingId}',
+                    uz: 'E’lon ${booking.listingId}',
+                  ),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF172146),
@@ -295,7 +362,11 @@ class _BookingTile extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.calendar_month_outlined, size: 16, color: Color(0xFF5E6880)),
+              const Icon(
+                Icons.calendar_month_outlined,
+                size: 16,
+                color: Color(0xFF5E6880),
+              ),
               const SizedBox(width: 6),
               Text(
                 '${_date(booking.checkInDate)} - ${_date(booking.checkOutDate)}',
@@ -303,7 +374,7 @@ class _BookingTile extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '$nights night${nights == 1 ? '' : 's'}',
+                _nightsLabel(context, nights),
                 style: const TextStyle(
                   color: Color(0xFF6C7590),
                   fontWeight: FontWeight.w600,
@@ -314,10 +385,14 @@ class _BookingTile extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.payments_outlined, size: 16, color: Color(0xFF5E6880)),
+              const Icon(
+                Icons.payments_outlined,
+                size: 16,
+                color: Color(0xFF5E6880),
+              ),
               const SizedBox(width: 6),
               Text(
-                'Payment: ${_paymentLabel(booking)}',
+                '${_l10n(context, en: 'Payment', ru: 'Оплата', uz: 'To‘lov')}: ${_paymentLabel(context, booking)}',
                 style: const TextStyle(color: Color(0xFF3C465E)),
               ),
               const Spacer(),
@@ -331,23 +406,32 @@ class _BookingTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Wrap(spacing: 8, runSpacing: 8, children: _actions()),
+          Wrap(spacing: 8, runSpacing: 8, children: _actions(context)),
         ],
       ),
     );
   }
 
-  List<Widget> _actions() {
+  List<Widget> _actions(BuildContext context) {
     if (role == AppRole.host) {
       if (booking.status == BookingStatus.pendingHostApproval) {
         return [
           FilledButton(
             onPressed: loading ? null : onConfirm,
-            child: const Text('Confirm'),
+            child: Text(
+              _l10n(
+                context,
+                en: 'Confirm',
+                ru: 'Подтвердить',
+                uz: 'Tasdiqlash',
+              ),
+            ),
           ),
           OutlinedButton(
             onPressed: loading ? null : onReject,
-            child: const Text('Reject'),
+            child: Text(
+              _l10n(context, en: 'Reject', ru: 'Отклонить', uz: 'Rad etish'),
+            ),
           ),
         ];
       }
@@ -356,7 +440,14 @@ class _BookingTile extends StatelessWidget {
         return [
           FilledButton(
             onPressed: loading ? null : onComplete,
-            child: const Text('Mark as completed'),
+            child: Text(
+              _l10n(
+                context,
+                en: 'Mark as completed',
+                ru: 'Отметить как завершённую',
+                uz: 'Yakunlangan deb belgilash',
+              ),
+            ),
           ),
         ];
       }
@@ -368,7 +459,14 @@ class _BookingTile extends StatelessWidget {
       return [
         OutlinedButton(
           onPressed: loading ? null : onCancelByGuest,
-          child: const Text('Cancel request'),
+          child: Text(
+            _l10n(
+              context,
+              en: 'Cancel request',
+              ru: 'Отменить запрос',
+              uz: 'So‘rovni bekor qilish',
+            ),
+          ),
         ),
       ];
     }
@@ -379,14 +477,28 @@ class _BookingTile extends StatelessWidget {
         actions.add(
           FilledButton(
             onPressed: loading ? null : onProceedToPayment,
-            child: const Text('Proceed to payment'),
+            child: Text(
+              _l10n(
+                context,
+                en: 'Proceed to payment',
+                ru: 'Перейти к оплате',
+                uz: 'To‘lovga o‘tish',
+              ),
+            ),
           ),
         );
       }
       actions.add(
         OutlinedButton(
           onPressed: loading ? null : onCancelByGuest,
-          child: const Text('Cancel (24h rule)'),
+          child: Text(
+            _l10n(
+              context,
+              en: 'Cancel (24h rule)',
+              ru: 'Отменить (правило 24ч)',
+              uz: 'Bekor qilish (24 soat qoidasi)',
+            ),
+          ),
         ),
       );
       return actions;
@@ -396,7 +508,14 @@ class _BookingTile extends StatelessWidget {
       return [
         OutlinedButton(
           onPressed: loading ? null : onLeaveReview,
-          child: const Text('Leave review'),
+          child: Text(
+            _l10n(
+              context,
+              en: 'Leave review',
+              ru: 'Оставить отзыв',
+              uz: 'Sharh qoldirish',
+            ),
+          ),
         ),
       ];
     }
@@ -404,13 +523,23 @@ class _BookingTile extends StatelessWidget {
     return const [];
   }
 
-  String _paymentLabel(Booking booking) {
+  String _paymentLabel(BuildContext context, Booking booking) {
     if (!booking.paymentRequired) {
-      return 'Not required';
+      return _l10n(
+        context,
+        en: 'Not required',
+        ru: 'Не требуется',
+        uz: 'Talab qilinmaydi',
+      );
     }
 
     if (booking.paymentStatus == null) {
-      return 'Not paid';
+      return _l10n(
+        context,
+        en: 'Not paid',
+        ru: 'Не оплачено',
+        uz: 'To‘lanmagan',
+      );
     }
     return booking.paymentStatus.toString().split('.').last;
   }
@@ -447,7 +576,7 @@ class _StatusBadge extends StatelessWidget {
         border: Border.all(color: _statusColor(status).withValues(alpha: 0.4)),
       ),
       child: Text(
-        _statusLabel(status),
+        _statusLabel(context, status),
         style: TextStyle(
           color: _statusColor(status),
           fontSize: 11,
@@ -458,18 +587,38 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-String _statusLabel(BookingStatus status) {
+String _statusLabel(BuildContext context, BookingStatus status) {
   switch (status) {
     case BookingStatus.pendingHostApproval:
-      return 'Pending';
+      return _l10n(context, en: 'Pending', ru: 'Ожидание', uz: 'Kutilmoqda');
     case BookingStatus.confirmed:
-      return 'Confirmed';
+      return _l10n(
+        context,
+        en: 'Confirmed',
+        ru: 'Подтверждено',
+        uz: 'Tasdiqlangan',
+      );
     case BookingStatus.cancelledByGuest:
-      return 'Guest cancelled';
+      return _l10n(
+        context,
+        en: 'Guest cancelled',
+        ru: 'Отменено гостем',
+        uz: 'Mehmon bekor qilgan',
+      );
     case BookingStatus.cancelledByHost:
-      return 'Host cancelled';
+      return _l10n(
+        context,
+        en: 'Host cancelled',
+        ru: 'Отменено хостом',
+        uz: 'Host bekor qilgan',
+      );
     case BookingStatus.completed:
-      return 'Completed';
+      return _l10n(
+        context,
+        en: 'Completed',
+        ru: 'Завершено',
+        uz: 'Yakunlangan',
+      );
   }
 }
 
@@ -518,10 +667,42 @@ class _HostSummary extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _MetricChip(label: 'Pending', value: '$pending'),
-            _MetricChip(label: 'Confirmed', value: '$confirmed'),
-            _MetricChip(label: 'Completed', value: '$completed'),
-            _MetricChip(label: 'Acceptance', value: '$acceptanceRate%'),
+            _MetricChip(
+              label: _l10n(
+                context,
+                en: 'Pending',
+                ru: 'Ожидание',
+                uz: 'Kutilmoqda',
+              ),
+              value: '$pending',
+            ),
+            _MetricChip(
+              label: _l10n(
+                context,
+                en: 'Confirmed',
+                ru: 'Подтверждено',
+                uz: 'Tasdiqlangan',
+              ),
+              value: '$confirmed',
+            ),
+            _MetricChip(
+              label: _l10n(
+                context,
+                en: 'Completed',
+                ru: 'Завершено',
+                uz: 'Yakunlangan',
+              ),
+              value: '$completed',
+            ),
+            _MetricChip(
+              label: _l10n(
+                context,
+                en: 'Acceptance',
+                ru: 'Принято',
+                uz: 'Qabul',
+              ),
+              value: '$acceptanceRate%',
+            ),
           ],
         ),
       ),
@@ -554,8 +735,19 @@ class _GuestSummary extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _MetricChip(label: 'Active', value: '$active'),
-            _MetricChip(label: 'Completed', value: '$completed'),
+            _MetricChip(
+              label: _l10n(context, en: 'Active', ru: 'Активные', uz: 'Faol'),
+              value: '$active',
+            ),
+            _MetricChip(
+              label: _l10n(
+                context,
+                en: 'Completed',
+                ru: 'Завершено',
+                uz: 'Yakunlangan',
+              ),
+              value: '$completed',
+            ),
           ],
         ),
       ),
@@ -607,16 +799,26 @@ class _BookingScopeBanner extends StatelessWidget {
         color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tutta Booking Rules',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            _l10n(
+              context,
+              en: 'Tutta Booking Rules',
+              ru: 'Правила бронирования Tutta',
+              uz: 'Tutta bron qoidalari',
+            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            'Uzbekistan only. Short-term rental only. Max stay is 30 days.',
+            _l10n(
+              context,
+              en: 'Uzbekistan only. Short-term rental only. Max stay is 30 days.',
+              ru: 'Только Узбекистан. Только краткосрочная аренда. Максимум 30 дней.',
+              uz: 'Faqat O‘zbekiston. Faqat qisqa muddatli ijara. Maksimal 30 kun.',
+            ),
           ),
         ],
       ),
@@ -641,8 +843,18 @@ class _BookingsEmptyState extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               role == AppRole.host
-                  ? 'No incoming booking requests yet.'
-                  : 'No bookings found for this filter.',
+                  ? _l10n(
+                      context,
+                      en: 'No incoming booking requests yet.',
+                      ru: 'Пока нет входящих запросов на бронь.',
+                      uz: 'Hozircha kiruvchi bron so‘rovlari yo‘q.',
+                    )
+                  : _l10n(
+                      context,
+                      en: 'No bookings found for this filter.',
+                      ru: 'Для этого фильтра брони не найдены.',
+                      uz: 'Bu filtr bo‘yicha bronlar topilmadi.',
+                    ),
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -651,13 +863,53 @@ class _BookingsEmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               role == AppRole.host
-                  ? 'Once guests request short stays in Uzbekistan, requests will appear here.'
-                  : 'Try changing the filter or discover listings in Uzbekistan to create your first booking.',
+                  ? _l10n(
+                      context,
+                      en: 'Once guests request short stays in Uzbekistan, requests will appear here.',
+                      ru: 'Когда гости отправят заявки на краткосрочную аренду в Узбекистане, они появятся здесь.',
+                      uz: 'Mehmonlar O‘zbekistonda qisqa muddatli bron so‘rov yuborganda, ular shu yerda ko‘rinadi.',
+                    )
+                  : _l10n(
+                      context,
+                      en: 'Try changing the filter or discover listings in Uzbekistan to create your first booking.',
+                      ru: 'Попробуйте сменить фильтр или выберите жильё в Узбекистане, чтобы создать первую бронь.',
+                      uz: 'Filtrni o‘zgartirib ko‘ring yoki O‘zbekistondagi e’lonlarni ochib birinchi bronni yarating.',
+                    ),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+String _l10n(
+  BuildContext context, {
+  required String en,
+  required String ru,
+  required String uz,
+}) {
+  switch (Localizations.localeOf(context).languageCode) {
+    case 'ru':
+      return ru;
+    case 'uz':
+      return uz;
+    default:
+      return en;
+  }
+}
+
+String _nightsLabel(BuildContext context, int nights) {
+  if (nights < 0) {
+    return '';
+  }
+  switch (Localizations.localeOf(context).languageCode) {
+    case 'ru':
+      return '$nights ноч.';
+    case 'uz':
+      return '$nights tun';
+    default:
+      return '$nights night${nights == 1 ? '' : 's'}';
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -67,6 +69,7 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
         final currentUserId = ref.watch(authControllerProvider).valueOrNull?.user?.id;
         final images = listing.imageUrls;
         final selectedImage = images.isEmpty ? null : images[_selectedImageIndex.clamp(0, images.length - 1)];
+        final coordinates = _extractCoordinates(listing);
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -254,10 +257,21 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
                     Text(_t(context, en: 'Location', ru: '�������', uz: 'Joylashuv'), style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w800, fontSize: 22)),
                     const SizedBox(height: 12),
                     _DetailLine(label: _t(context, en: 'Address', ru: '�����', uz: 'Manzil'), value: '${listing.city}, ${listing.district}'),
-                    if ((listing.landmark ?? '').trim().isNotEmpty)
+                    if ((listing.landmark ?? '').trim().isNotEmpty && coordinates == null)
                       _DetailLine(label: _t(context, en: 'Landmark', ru: '��������', uz: 'Mo\'ljal'), value: listing.landmark!.trim()),
                     if ((listing.metro ?? '').trim().isNotEmpty)
                       _DetailLine(label: _t(context, en: 'Metro', ru: '�����', uz: 'Metro'), value: listing.metro!.trim()),
+                    const SizedBox(height: 14),
+                    _LocationPreviewMap(
+                      coordinates: coordinates,
+                      title: _t(context, en: 'Selected location', ru: 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ', uz: 'Tanlangan joylashuv'),
+                      emptyMessage: _t(
+                        context,
+                        en: 'Host has not provided exact map coordinates.',
+                        ru: 'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.',
+                        uz: 'Host aniq koordinatalarni hali kiritmagan.',
+                      ),
+                    ),
                     const SizedBox(height: 14),
                     InkWell(
                       borderRadius: BorderRadius.circular(22),
@@ -284,7 +298,7 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Icon(
-                                  Icons.location_searching_rounded,
+                                  Icons.open_in_new_rounded,
                                   color: Colors.white,
                                 ),
                               ),
@@ -429,7 +443,7 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
 
   (double, double)? _extractCoordinates(Listing listing) {
     final text = (listing.landmark ?? '').trim();
-    final match = RegExp(r'^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$')
+    final match = RegExp(r'(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)')
         .firstMatch(text);
     if (match == null) {
       return null;
@@ -463,6 +477,108 @@ class _ListingDetailsScreenState extends ConsumerState<ListingDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
+
+class _LocationPreviewMap extends StatelessWidget {
+  const _LocationPreviewMap({
+    required this.coordinates,
+    required this.title,
+    required this.emptyMessage,
+  });
+
+  final (double, double)? coordinates;
+  final String title;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final coords = coordinates;
+    final hasCoordinates = coords != null;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 182,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceTint,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: hasCoordinates
+            ? Stack(
+                children: [
+                  IgnorePointer(
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(coords.$1, coords.$2),
+                        initialZoom: 14.4,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.none,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'uz.tutta.app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(coords.$1, coords.$2),
+                              width: 44,
+                              height: 44,
+                              child: const Icon(
+                                Icons.location_pin,
+                                color: AppColors.primary,
+                                size: 42,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(230),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    emptyMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
 class _ReviewsSection extends ConsumerWidget {
   const _ReviewsSection({
     required this.listingId,

@@ -139,6 +139,31 @@ class FakeAuthRepository implements AuthRepository {
     return _currentUser!;
   }
 
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (currentPassword != _demoPassword) {
+      throw const AppException('Current password is incorrect.');
+    }
+    if (newPassword.length < 8) {
+      throw const AppException(
+        'New password must be at least 8 characters long.',
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (currentPassword != _demoPassword) {
+      throw const AppException('Incorrect password for account deletion.');
+    }
+    _currentUser = null;
+  }
+
   AuthUser _demoUser({
     required String email,
     String? accessToken,

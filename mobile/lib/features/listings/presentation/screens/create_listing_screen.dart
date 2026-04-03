@@ -1037,7 +1037,7 @@ class _CreateListingCopy {
           amenities: 'Удобства',
           amenitiesHint: 'Выберите то, что есть в жилье.',
           exactMapLocation: 'Точная локация',
-          exactMapLocationHint: 'Выберите точку на карте для Google Maps.',
+          exactMapLocationHint: 'Выберите точку на карте в приложении.',
           pickOnMap: 'Выбрать на карте',
         );
       case 'uz':
@@ -1092,8 +1092,7 @@ class _CreateListingCopy {
           amenities: 'Qulayliklar',
           amenitiesHint: 'Turar joyda mavjud bo\'lgan qulayliklarni tanlang.',
           exactMapLocation: 'Aniq joylashuv',
-          exactMapLocationHint:
-              'Google Maps uchun aniq nuqtani xaritada tanlang.',
+          exactMapLocationHint: 'Xaritada aniq nuqtani ilova ichida tanlang.',
           pickOnMap: 'Xaritada tanlash',
         );
       default:
@@ -1144,8 +1143,7 @@ class _CreateListingCopy {
           amenities: 'Amenities',
           amenitiesHint: 'Choose the amenities available in this stay.',
           exactMapLocation: 'Exact map location',
-          exactMapLocationHint:
-              'Pick an exact point that guests can open in Google Maps.',
+          exactMapLocationHint: 'Pick an exact point on the in-app map.',
           pickOnMap: 'Pick on map',
         );
     }

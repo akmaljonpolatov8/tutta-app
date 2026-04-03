@@ -26,7 +26,7 @@ class FakeListingsRepository implements ListingsRepository {
         ListingAmenity.washingMachine,
         ListingAmenity.instantConfirm,
       ],
-      landmark: 'Minor Mosque',
+      landmark: '41.352312, 69.287169',
       metro: 'Minor',
       description: 'Modern apartment for short stays only.',
       imageUrls: [
@@ -74,7 +74,7 @@ class FakeListingsRepository implements ListingsRepository {
         ListingAmenity.kitchen,
         ListingAmenity.privateBathroom,
       ],
-      landmark: 'Tashkent City',
+      landmark: '41.311861, 69.245982',
       metro: 'Kosmonavtlar',
       description: 'Bright loft with cozy interior and fast Wi-Fi.',
       imageUrls: [
@@ -99,7 +99,7 @@ class FakeListingsRepository implements ListingsRepository {
         ListingAmenity.washingMachine,
         ListingAmenity.kidsAllowed,
       ],
-      landmark: 'Magic City',
+      landmark: '41.299486, 69.240908',
       description: 'Spacious apartment for family short stays.',
       imageUrls: [
         'https://images.unsplash.com/photo-1493666438817-866a91353ca9?auto=format&fit=crop&w=1200&q=80',
@@ -163,7 +163,7 @@ class FakeListingsRepository implements ListingsRepository {
         ListingAmenity.parking,
         ListingAmenity.kitchen,
       ],
-      landmark: 'Minor',
+      landmark: '41.352312, 69.287169',
       description: 'Independent entrance and flexible check-in.',
       imageUrls: [
         'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
@@ -288,7 +288,7 @@ class FakeListingsRepository implements ListingsRepository {
         ListingAmenity.airConditioner,
         ListingAmenity.kitchen,
       ],
-      landmark: 'Lyabi-Hauz',
+      landmark: '39.774982, 64.421603',
       description: 'Historic area with modern comfort.',
       imageUrls: [
         'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=1200&q=80',
@@ -296,6 +296,7 @@ class FakeListingsRepository implements ListingsRepository {
     ),
   ];
   static final List<Listing> _createdListings = <Listing>[];
+  static final Map<String, Listing> _updatedListings = <String, Listing>{};
   static final Map<String, Map<DateTime, AvailabilityDay>>
   _availabilityByListing = <String, Map<DateTime, AvailabilityDay>>{};
 
@@ -316,7 +317,7 @@ class FakeListingsRepository implements ListingsRepository {
     final cityToken = city.split(',').first.trim();
     final district = params.district.trim().toLowerCase();
 
-    return [..._seed, ..._createdListings]
+    return _allListings()
         .where((listing) {
           if (!listing.isActive) {
             return false;
@@ -376,7 +377,7 @@ class FakeListingsRepository implements ListingsRepository {
   @override
   Future<Listing?> getById(String listingId) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
-    for (final listing in [..._createdListings, ..._seed]) {
+    for (final listing in _allListings()) {
       if (listing.id == listingId) {
         return listing;
       }
@@ -399,7 +400,7 @@ class FakeListingsRepository implements ListingsRepository {
     bool includeInactive = false,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 180));
-    return [..._createdListings, ..._seed]
+    return _allListings()
         .where((listing) => listing.hostId == hostId)
         .where((listing) => includeInactive || listing.isActive)
         .where(
@@ -430,7 +431,10 @@ class FakeListingsRepository implements ListingsRepository {
           : (input.nightlyPriceUzs ?? 0),
       isActive: true,
       description: input.description.trim(),
-      landmark: input.landmark?.trim(),
+      landmark: _composeLandmark(
+        landmark: input.landmark?.trim(),
+        coordinates: input.mapCoordinates,
+      ),
       metro: input.metro?.trim(),
     );
     _createdListings.insert(0, listing);
@@ -459,12 +463,17 @@ class FakeListingsRepository implements ListingsRepository {
           : (input.nightlyPriceUzs ?? 0),
       isActive: true,
       description: input.description.trim(),
-      landmark: input.landmark?.trim(),
+      landmark: _composeLandmark(
+        landmark: input.landmark?.trim(),
+        coordinates: input.mapCoordinates,
+      ),
       metro: input.metro?.trim(),
     );
     final index = _createdListings.indexWhere((item) => item.id == listingId);
     if (index >= 0) {
       _createdListings[index] = listing;
+    } else {
+      _updatedListings[listingId] = listing;
     }
     return listing;
   }
@@ -473,6 +482,7 @@ class FakeListingsRepository implements ListingsRepository {
   Future<void> deleteListing(String listingId) async {
     await Future<void>.delayed(const Duration(milliseconds: 220));
     _createdListings.removeWhere((item) => item.id == listingId);
+    _updatedListings.remove(listingId);
   }
 
   @override
@@ -508,5 +518,31 @@ class FakeListingsRepository implements ListingsRepository {
     final result = map.values.toList(growable: false)
       ..sort((a, b) => a.date.compareTo(b.date));
     return result;
+  }
+
+  List<Listing> _allListings() {
+    final byId = <String, Listing>{};
+    for (final item in _seed) {
+      byId[item.id] = item;
+    }
+    for (final item in _createdListings) {
+      byId[item.id] = item;
+    }
+    for (final entry in _updatedListings.entries) {
+      byId[entry.key] = entry.value;
+    }
+    return byId.values.toList(growable: false);
+  }
+
+  String? _composeLandmark({String? landmark, String? coordinates}) {
+    final normalizedLandmark = (landmark ?? '').trim();
+    final normalizedCoordinates = (coordinates ?? '').trim();
+    if (normalizedCoordinates.isNotEmpty) {
+      return normalizedCoordinates;
+    }
+    if (normalizedLandmark.isNotEmpty) {
+      return normalizedLandmark;
+    }
+    return null;
   }
 }
