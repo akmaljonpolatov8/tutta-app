@@ -57,7 +57,8 @@ class AuthController extends StateNotifier<AsyncValue<AuthState>> {
       } else {
         final googleSignIn = GoogleSignIn(
           scopes: ['email', 'profile'],
-          clientId: _googleWebClientId,
+          clientId: kIsWeb ? _googleWebClientId : null,
+          serverClientId: _googleServerClientId,
         );
         try {
           await googleSignIn.disconnect();
@@ -123,15 +124,19 @@ class AuthController extends StateNotifier<AsyncValue<AuthState>> {
   }
 
   String? get _googleWebClientId {
-    if (!kIsWeb) {
-      return null;
-    }
-
     const value = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
     if (value.trim().isEmpty) {
       return null;
     }
     return value.trim();
+  }
+
+  String? get _googleServerClientId {
+    const value = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+    if (value.trim().isNotEmpty) {
+      return value.trim();
+    }
+    return _googleWebClientId;
   }
 
   Future<String?> requestOtp(String phone) async {

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "265689292408",
+    "project_id": "tutta-f3b76",
+    "storage_bucket": "tutta-f3b76.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:265689292408:android:4582ea68375575926b178d",
+        "android_client_info": {
+          "package_name": "uz.tutta.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "265689292408-mmavdppmo3t0uqs027jmblni39mndj36.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "uz.tutta.app",
+            "certificate_hash": "1e0bd421335cf32d577a31387a0ae13227f63090"
+          }
+        },
+        {
+          "client_id": "265689292408-3hbscvh4l6t64fln5vbro5r4qg9ivoe2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA60Gj5DoPZ0MA-U9wiN3AvzvJHLxsR9ck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "265689292408-3hbscvh4l6t64fln5vbro5r4qg9ivoe2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

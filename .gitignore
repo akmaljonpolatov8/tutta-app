@@ -1,0 +1,33 @@
+# Global
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.iml
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins-dependencies
+build/
+.pub-cache/
+.pub/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local env and secrets
+**/.env
+**/key.properties
+**/*.jks
+**/*.keystore
+
+# Local databases/media/static
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
