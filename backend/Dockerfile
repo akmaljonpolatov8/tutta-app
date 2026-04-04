@@ -22,14 +22,14 @@ RUN apt-get update \
       curl \
   && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt requirements.txt
+COPY . .
 
 # Use python -m pip so we never rely on a 'pip' binary being present
 RUN python -m pip install --upgrade pip \
   && python -m pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the app
-COPY . .
+
 
 # Collect static at build time (safe; does not require DB)
 RUN python manage.py collectstatic --noinput
